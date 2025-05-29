@@ -122,9 +122,25 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                               DataCell(Text(product.category)),
                                               DataCell(
                                                 Row(
-                                                  mainAxisSize: Main
-                                                          SnackBar(content: Text('Product ${product.name} deleted')),
-                                                        );
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    IconButton(
+                                                      icon: const Icon(Icons.edit),
+                                                      onPressed: () => _openProductForm(product: product),
+                                                    ),
+                                                    IconButton(
+                                                      icon: const Icon(Icons.delete),
+                                                      onPressed: () async {
+                                                        await provider.deleteProductItem(product.productId);
+                                                        if (provider.error == null) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            SnackBar(content: Text('Product ${product.name} deleted')),
+                                                          );
+                                                        } else {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            SnackBar(content: Text('Error: ${provider.error}')),
+                                                          );
+                                                        }
                                                       },
                                                     ),
                                                   ],
