@@ -76,8 +76,10 @@ class ProductRepositoryImpl implements ProductRepository {
         createdAt: product.createdAt,
         updatedAt: product.updatedAt,
       );
+      // Pass both productId and productModel to the remote data source
       final result = await remoteDataSource.updateProduct(
-             productModel,
+        productId,
+        productModel,
       );
       return Success(result);
     } catch (e) {

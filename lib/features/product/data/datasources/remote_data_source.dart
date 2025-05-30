@@ -70,7 +70,6 @@ class RemoteDataSource {
     }
   }
 
-  @override
   Future<void> deleteProduct(int productId) async {
     try {
       await dio.delete('$baseUrl/api/products/$productId');

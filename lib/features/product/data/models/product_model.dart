@@ -32,10 +32,7 @@ class ProductModel extends Product {
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
       id: json['_id']?.toString() ?? '',
-      productId:
-          json['productId'] is int
-              ? json['productId']
-              : int.tryParse(json['productId']?.toString() ?? '0') ?? 0,
+      productId: json['id'] ?? 0,
       name: json['name']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       price:

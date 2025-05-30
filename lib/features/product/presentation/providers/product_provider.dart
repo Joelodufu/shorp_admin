@@ -5,6 +5,7 @@ import '../../domain/usecases/get_products.dart';
 import '../../domain/usecases/create_product.dart';
 import '../../domain/usecases/delete_product.dart';
 import '../../domain/usecases/get_categories.dart';
+import '../../domain/usecases/update_product.dart'; // <-- Add this import
 import '../../../../core/error/result.dart';
 
 class ProductProvider with ChangeNotifier {
@@ -12,6 +13,7 @@ class ProductProvider with ChangeNotifier {
   final GetCategories getCategories;
   final CreateProduct createProduct;
   final DeleteProduct deleteProduct;
+  final UpdateProduct updateProduct; // <-- Add this field
 
   List<Product> _products = [];
   List<String> _categories = [];
@@ -23,6 +25,7 @@ class ProductProvider with ChangeNotifier {
     required this.getCategories,
     required this.createProduct,
     required this.deleteProduct,
+    required this.updateProduct, // <-- Add this param
   });
 
   List<Product> get products => _products;
@@ -33,7 +36,7 @@ class ProductProvider with ChangeNotifier {
   Future<void> fetchProducts({String? category, String? search}) async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    // notifyListeners();
     try {
       final result = await getProducts(
         GetProductsParams(category: category, search: search),
@@ -56,7 +59,7 @@ class ProductProvider with ChangeNotifier {
   Future<void> fetchCategories() async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    // notifyListeners();
     try {
       final result = await getCategories(NoParams());
       if (result is Success<List<String>>) {
@@ -96,31 +99,30 @@ class ProductProvider with ChangeNotifier {
     }
   }
 
-  // Future<void> updateProductItem(int productId, Product product) async {
-  //   _isLoading = true;
-  //   _error = null;
-  //   notifyListeners();
-  //   try {
-  //     final result = await updateProduct(
-  //       productId,
-  //       product,
-  //     );
-  //     if (result is Success<Product>) {
-  //       final index = _products.indexWhere((p) => p.productId == productId);
-  //       if (index != -1) _products[index] = result.value;
-  //       await fetchCategories();
-  //     } else if (result is Failure<Product>) {
-  //       _error = result.message;
-  //       print('Error updating product: $_error');
-  //     }
-  //   } catch (e) {
-  //     _error = e.toString();
-  //     print('Unexpected error updating product: $e');
-  //   } finally {
-  //     _isLoading = false;
-  //     notifyListeners();
-  //   }
-  // }
+  Future<void> updateProductItem(int productId, Product product) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final result = await updateProduct(
+        UpdateProductParams(productId: productId, product: product),
+      );
+      if (result is Success<Product>) {
+        final index = _products.indexWhere((p) => p.productId == productId);
+        if (index != -1) _products[index] = result.value;
+        await fetchCategories();
+      } else if (result is Failure<Product>) {
+        _error = result.message;
+        print('Error updating product: $_error');
+      }
+    } catch (e) {
+      _error = e.toString();
+      print('Unexpected error updating product: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> deleteProductItem(int productId) async {
     _isLoading = true;

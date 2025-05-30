@@ -7,7 +7,7 @@ abstract class ProductRemoteDataSource {
   Future<List<ProductModel>> getProducts({String? category, String? search});
   Future<List<String>> getCategories();
   Future<ProductModel> createProduct(ProductModel product);
-  Future<ProductModel> updateProduct( ProductModel product);
+  Future<ProductModel> updateProduct(int productId, ProductModel product);
   Future<void> deleteProduct(int productId);
 }
 
@@ -66,11 +66,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<ProductModel> updateProduct(
+    int productId,
     ProductModel product,
   ) async {
     try {
       final response = await dio.put(
-        '$baseUrl/api/products/$product.productId',
+        '$baseUrl/api/products/$productId',
         data: product.toJson(),
       );
       return ProductModel.fromJson(response.data);
