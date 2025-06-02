@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../carousel/presentation/widgets/slidebar.dart';
 import '../providers/product_provider.dart';
+import '../widgets/product_card.dart';
 import 'product_form_screen.dart';
 import '../widgets/product_item.dart'; // <-- Import your modular widgets
 
@@ -19,6 +20,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   String? _selectedCategory;
   String _search = '';
   ProductViewType _viewType = ProductViewType.table;
+
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void didChangeDependencies() {
@@ -62,13 +65,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   Future<void> _confirmDelete(
-    BuildContext context,
+    BuildContext parentContext, // <-- Use parent context
     int productId,
     String name,
   ) async {
-    final provider = Provider.of<ProductProvider>(context, listen: false);
+    final provider = Provider.of<ProductProvider>(parentContext, listen: false);
     final confirmed = await showDialog<bool>(
-      context: context,
+      context: parentContext,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Product'),
         content: Text('Are you sure you want to delete "$name"?'),
@@ -86,13 +89,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
     if (confirmed == true) {
       await provider.deleteProductItem(productId);
-      if (!mounted) return; // <-- Move this up, before using context
       if (provider.error == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(content: Text('Product "$name" deleted')),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(content: Text('Error: ${provider.error}')),
         );
       }
@@ -146,18 +148,23 @@ class _ProductListScreenState extends State<ProductListScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: isMobile ? 1 : 3,
-        childAspectRatio: isMobile ? 2.5 : 1.7,
+        childAspectRatio: 0.65,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
       itemCount: provider.products.length,
       itemBuilder: (context, index) {
         final product = provider.products[index];
-        return ProductItem(
+        return ProductCard(
           product: product,
-          onEdit: () => _openProductForm(product: product),
+          onUpdate:
+              () => _openProductForm(product: product), // Tap card to edit
           onDelete:
-              () => _confirmDelete(context, product.productId, product.name),
+              () => _confirmDelete(
+                context,
+                product.productId,
+                product.name,
+              ), // Delete button
         );
       },
     );
@@ -165,18 +172,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scaffoldContext = context; // Save the parent context
     final provider = Provider.of<ProductProvider>(context);
     final isMobile = MediaQuery.of(context).size.width <= 600;
     final isTablet =
         MediaQuery.of(context).size.width > 600 &&
         MediaQuery.of(context).size.width <= 900;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Products'),
-        leading:
-            isMobile
-                ? Builder(
+    return MaterialApp(
+      scaffoldMessengerKey: scaffoldMessengerKey,
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Products'),
+          leading:
+              isMobile
+                  ? Builder(
                   builder: (BuildContext scaffoldContext) {
                     return IconButton(
                       icon: const Icon(Icons.menu),
@@ -186,110 +196,111 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     );
                   },
                 )
-                : null,
-        actions: [
-          IconButton(
-            icon: Icon(
-              _viewType == ProductViewType.table
-                  ? Icons.view_module
-                  : Icons.table_chart,
-            ),
-            tooltip:
+                  : null,
+          actions: [
+            IconButton(
+              icon: Icon(
                 _viewType == ProductViewType.table
-                    ? 'Switch to Card View'
-                    : 'Switch to Table View',
-            onPressed: () {
-              setState(() {
-                _viewType =
-                    _viewType == ProductViewType.table
-                        ? ProductViewType.card
-                        : ProductViewType.table;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openProductForm(),
-          ),
-        ],
-      ),
-      drawer:
-          isMobile
-              ? Drawer(
+                    ? Icons.view_module
+                    : Icons.table_chart,
+              ),
+              tooltip:
+                  _viewType == ProductViewType.table
+                      ? 'Switch to Card View'
+                      : 'Switch to Table View',
+              onPressed: () {
+                setState(() {
+                  _viewType =
+                      _viewType == ProductViewType.table
+                          ? ProductViewType.card
+                          : ProductViewType.table;
+                });
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _openProductForm(),
+            ),
+          ],
+        ),
+        drawer:
+            isMobile
+                ? Drawer(
                 child: SafeArea(
                   child: Container(color: Colors.blue, child: const Sidebar()),
                 ),
               )
-              : null,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final padding = isMobile ? 16.0 : 24.0;
-          return Row(
-            children: [
-              if (!isMobile)
-                Container(
-                  width: isTablet ? 80 : 200,
-                  color: Colors.blue,
-                  child: const Sidebar(),
-                ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(padding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Search and Filter Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Search products...',
-                                prefixIcon: Icon(Icons.search),
-                              ),
-                              onChanged: _onSearchChanged,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          DropdownButton<String>(
-                            value: _selectedCategory,
-                            hint: const Text('All Categories'),
-                            items: [
-                              const DropdownMenuItem(
-                                value: null,
-                                child: Text('All'),
-                              ),
-                              ...provider.categories.map(
-                                (cat) => DropdownMenuItem(
-                                  value: cat,
-                                  child: Text(cat),
+                : null,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final padding = isMobile ? 16.0 : 24.0;
+            return Row(
+              children: [
+                if (!isMobile)
+                  Container(
+                    width: isTablet ? 80 : 200,
+                    color: Colors.blue,
+                    child: const Sidebar(),
+                  ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(padding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Search and Filter Row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                decoration: const InputDecoration(
+                                  labelText: 'Search products...',
+                                  prefixIcon: Icon(Icons.search),
                                 ),
+                                onChanged: _onSearchChanged,
                               ),
-                            ],
-                            onChanged: _onCategoryChanged,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      provider.isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : provider.error != null
-                          ? Center(child: Text('Error: ${provider.error}'))
-                          : provider.products.isEmpty
-                          ? const Center(child: Text('No products found'))
-                          : Expanded(
-                            child:
-                                _viewType == ProductViewType.table
-                                    ? _buildTableView(provider, isMobile)
-                                    : _buildCardView(provider, isMobile),
-                          ),
-                    ],
+                            ),
+                            const SizedBox(width: 16),
+                            DropdownButton<String>(
+                              value: _selectedCategory,
+                              hint: const Text('All Categories'),
+                              items: [
+                                const DropdownMenuItem(
+                                  value: null,
+                                  child: Text('All'),
+                                ),
+                                ...provider.categories.map(
+                                  (cat) => DropdownMenuItem(
+                                    value: cat,
+                                    child: Text(cat),
+                                  ),
+                                ),
+                              ],
+                              onChanged: _onCategoryChanged,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        provider.isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : provider.error != null
+                            ? Center(child: Text('Error: ${provider.error}'))
+                            : provider.products.isEmpty
+                            ? const Center(child: Text('No products found'))
+                            : Expanded(
+                          child:
+                              _viewType == ProductViewType.table
+                                  ? _buildTableView(provider, isMobile)
+                                  : _buildCardView(provider, isMobile),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
