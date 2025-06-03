@@ -9,6 +9,7 @@ import 'features/product/domain/usecases/create_product.dart';
 import 'features/product/domain/usecases/delete_product.dart';
 import 'features/product/domain/usecases/get_categories.dart';
 import 'features/product/domain/usecases/update_product.dart'; // <-- Add this import
+import 'features/product/domain/usecases/upload_product_image.dart'; // <-- Add this import
 import 'features/product/presentation/providers/product_provider.dart';
 import 'features/carousel/data/datasources/carousel_remote_data_source.dart';
 import 'features/carousel/data/repositories/carousel_repository_impl.dart';
@@ -53,7 +54,8 @@ class InjectionContainer {
     register<GetCategories>(GetCategories(productRepository));
     register<CreateProduct>(CreateProduct(productRepository));
     register<DeleteProduct>(DeleteProduct(productRepository));
-    register<UpdateProduct>(UpdateProduct(productRepository)); // <-- Register UpdateProduct
+    register<UpdateProduct>(UpdateProduct(productRepository));
+    register<UploadProductImage>(UploadProductImage(productRepository)); // <-- Register UploadProductImage
 
     register<ProductProvider>(
       ProductProvider(
@@ -62,6 +64,7 @@ class InjectionContainer {
         createProduct: get<CreateProduct>(),
         deleteProduct: get<DeleteProduct>(),
         updateProduct: get<UpdateProduct>(),
+        uploadProductImage: get<UploadProductImage>(), // <-- Inject here
       ),
     );
 

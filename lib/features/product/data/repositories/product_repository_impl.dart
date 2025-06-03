@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../../../../core/error/result.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
@@ -8,6 +10,8 @@ class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource remoteDataSource;
 
   ProductRepositoryImpl({required this.remoteDataSource});
+
+  
 
   @override
   Future<Result<List<Product>>> getProducts({
@@ -24,6 +28,8 @@ class ProductRepositoryImpl implements ProductRepository {
       return  Failure('Failed to fetch products');
     }
   }
+
+
 
   @override
   Future<Result<List<String>>> getCategories() async {
@@ -94,6 +100,16 @@ class ProductRepositoryImpl implements ProductRepository {
       return const Success(null);
     } catch (e) {
       return const Failure('Failed to delete product');
+    }
+  }
+
+  @override
+  Future<Result<String>> uploadProductImage(File image) async {
+    try {
+      final url = await remoteDataSource.uploadProductImage(image);
+      return Success(url); // Wrap in Success
+    } catch (e) {
+      return Failure(e.toString()); // Wrap in Failure
     }
   }
 }

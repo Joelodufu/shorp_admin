@@ -24,6 +24,7 @@ import 'features/product/domain/usecases/delete_product.dart';
 import 'features/product/domain/usecases/get_categories.dart';
 import 'features/product/domain/usecases/get_products.dart';
 import 'features/product/domain/usecases/update_product.dart';
+import 'features/product/domain/usecases/upload_product_image.dart';
 import 'features/product/presentation/providers/product_provider.dart';
 import 'features/product/presentation/screens/product_form_screen.dart';
 import 'features/product/presentation/screens/product_list_screen.dart';
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
       providers: InjectionContainer.getProviders(),
       child: MaterialApp(
         title: 'Admin Panel',
+        
         useInheritedMediaQuery: true,
         builder: DevicePreview.appBuilder,
         debugShowCheckedModeBanner: false, // Remove the debug banner
@@ -127,15 +129,20 @@ class InjectionContainer {
     // Create Dio HTTP client
     final dio = Dio();
 
+    // Create the data source and repository once
+    final productRemoteDataSource = ProductRemoteDataSourceImpl(dio: dio);
+    final productRepository = ProductRepositoryImpl(remoteDataSource: productRemoteDataSource);
+
     // Register ProductProvider and its dependencies
     _instances[ProductProvider] = ProductProvider(
-      getProducts: GetProducts(ProductRepositoryImpl(remoteDataSource: ProductRemoteDataSourceImpl(dio: dio))),
-      getCategories: GetCategories(ProductRepositoryImpl(remoteDataSource: ProductRemoteDataSourceImpl(dio: dio))),
-      createProduct: CreateProduct(ProductRepositoryImpl(remoteDataSource: ProductRemoteDataSourceImpl(dio: dio))),
-      deleteProduct: DeleteProduct(ProductRepositoryImpl(remoteDataSource: ProductRemoteDataSourceImpl(dio: dio))),
-      updateProduct: UpdateProduct(ProductRepositoryImpl(remoteDataSource: ProductRemoteDataSourceImpl(dio: dio))),
+      getProducts: GetProducts(productRepository),
+      getCategories: GetCategories(productRepository),
+      createProduct: CreateProduct(productRepository),
+      deleteProduct: DeleteProduct(productRepository),
+      updateProduct: UpdateProduct(productRepository),
+      uploadProductImage: UploadProductImage(productRepository), // <-- Add this line
     );
-
+ 
     // Register CarouselProvider and its dependencies
     final carouselRepository = CarouselRepositoryImpl(
       remoteDataSource: CarouselRemoteDataSourceImpl(dio: dio),

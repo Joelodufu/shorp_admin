@@ -50,12 +50,15 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
         title: Text(widget.carousel == null ? 'Add Carousel' : 'Edit Carousel'),
         leading:
             isMobile
-                ? IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () {
-                    print('Hamburger menu tapped at ${DateTime.now()}');
-                    Scaffold.of(context).openDrawer();
-                  },
+                ? Builder(
+                  builder:
+                      (drawerContext) => IconButton(
+                        icon: const Icon(Icons.menu),
+                        onPressed: () {
+                          print('Hamburger menu tapped at ${DateTime.now()}');
+                          Scaffold.of(drawerContext).openDrawer();
+                        },
+                      ),
                 )
                 : null,
       ),

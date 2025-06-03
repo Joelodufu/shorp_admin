@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/utils/constants.dart';
@@ -9,12 +11,31 @@ abstract class ProductRemoteDataSource {
   Future<ProductModel> createProduct(ProductModel product);
   Future<ProductModel> updateProduct(int productId, ProductModel product);
   Future<void> deleteProduct(int productId);
+    Future<String> uploadProductImage(File image);
+
 }
 
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   final Dio dio;
 
   ProductRemoteDataSourceImpl({required this.dio});
+
+   Future<String> uploadProductImage(File image) async {
+    final dio = Dio();
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(image.path),
+      'upload_preset': 'oltron',
+    });
+    final response = await dio.post(
+      'https://api.cloudinary.com/v1_1/emerald-codelines/image/upload',
+      data: formData,
+    );
+    if (response.statusCode == 200) {
+      return response.data['secure_url'] as String;
+    } else {
+      throw Exception('Failed to upload image');
+    }
+  }
 
   @override
   Future<List<ProductModel>> getProducts({

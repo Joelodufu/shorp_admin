@@ -21,7 +21,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   String _search = '';
   ProductViewType _viewType = ProductViewType.table;
 
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  final GlobalKey<ScaffoldMessengerState> key =
+      GlobalKey<ScaffoldMessengerState>();
 
   @override
   void didChangeDependencies() {
@@ -72,29 +73,30 @@ class _ProductListScreenState extends State<ProductListScreen> {
     final provider = Provider.of<ProductProvider>(parentContext, listen: false);
     final confirmed = await showDialog<bool>(
       context: parentContext,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: Text('Are you sure you want to delete "$name"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Delete Product'),
+            content: Text('Are you sure you want to delete "$name"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
     if (confirmed == true) {
       await provider.deleteProductItem(productId);
       if (provider.error == null) {
-        scaffoldMessengerKey.currentState?.showSnackBar(
+        key.currentState?.showSnackBar(
           SnackBar(content: Text('Product "$name" deleted')),
         );
       } else {
-        scaffoldMessengerKey.currentState?.showSnackBar(
+        key.currentState?.showSnackBar(
           SnackBar(content: Text('Error: ${provider.error}')),
         );
       }
@@ -120,9 +122,31 @@ class _ProductListScreenState extends State<ProductListScreen> {
               return DataRow(
                 cells: [
                   DataCell(ProductImagePreview(images: product.images)),
-                  DataCell(Text(product.name)),
-                  DataCell(Text('\$${product.price.toStringAsFixed(2)}')),
-                  DataCell(Text(product.category)),
+                  DataCell(
+                    Text(
+                      product.name.length > 15 && isMobile
+                          ? '${product.name.substring(0, 15)}...'
+                          : product.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '₦${product.price.toStringAsFixed(2)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      product.category.length > 15
+                          ? '${product.category.substring(0, 15)}...'
+                          : product.category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   DataCell(
                     ProductActions(
                       onEdit: () => _openProductForm(product: product),
@@ -179,14 +203,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
         MediaQuery.of(context).size.width > 600 &&
         MediaQuery.of(context).size.width <= 900;
 
-    return MaterialApp(
-      scaffoldMessengerKey: scaffoldMessengerKey,
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Products'),
-          leading:
-              isMobile
-                  ? Builder(
+    return Scaffold(
+      key: key,
+      appBar: AppBar(
+        title: const Text('Products'),
+        leading:
+            isMobile
+                ? Builder(
                   builder: (BuildContext scaffoldContext) {
                     return IconButton(
                       icon: const Icon(Icons.menu),
@@ -196,111 +219,110 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     );
                   },
                 )
-                  : null,
-          actions: [
-            IconButton(
-              icon: Icon(
+                : null,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _viewType == ProductViewType.table
+                  ? Icons.view_module
+                  : Icons.table_chart,
+            ),
+            tooltip:
                 _viewType == ProductViewType.table
-                    ? Icons.view_module
-                    : Icons.table_chart,
-              ),
-              tooltip:
-                  _viewType == ProductViewType.table
-                      ? 'Switch to Card View'
-                      : 'Switch to Table View',
-              onPressed: () {
-                setState(() {
-                  _viewType =
-                      _viewType == ProductViewType.table
-                          ? ProductViewType.card
-                          : ProductViewType.table;
-                });
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => _openProductForm(),
-            ),
-          ],
-        ),
-        drawer:
-            isMobile
-                ? Drawer(
+                    ? 'Switch to Card View'
+                    : 'Switch to Table View',
+            onPressed: () {
+              setState(() {
+                _viewType =
+                    _viewType == ProductViewType.table
+                        ? ProductViewType.card
+                        : ProductViewType.table;
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _openProductForm(),
+          ),
+        ],
+      ),
+      drawer:
+          isMobile
+              ? Drawer(
                 child: SafeArea(
                   child: Container(color: Colors.blue, child: const Sidebar()),
                 ),
               )
-                : null,
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final padding = isMobile ? 16.0 : 24.0;
-            return Row(
-              children: [
-                if (!isMobile)
-                  Container(
-                    width: isTablet ? 80 : 200,
-                    color: Colors.blue,
-                    child: const Sidebar(),
-                  ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(padding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Search and Filter Row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                decoration: const InputDecoration(
-                                  labelText: 'Search products...',
-                                  prefixIcon: Icon(Icons.search),
-                                ),
-                                onChanged: _onSearchChanged,
+              : null,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final padding = isMobile ? 16.0 : 24.0;
+          return Row(
+            children: [
+              if (!isMobile)
+                Container(
+                  width: isTablet ? 80 : 200,
+                  color: Colors.blue,
+                  child: const Sidebar(),
+                ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(padding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Search and Filter Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Search products...',
+                                prefixIcon: Icon(Icons.search),
                               ),
+                              onChanged: _onSearchChanged,
                             ),
-                            const SizedBox(width: 16),
-                            DropdownButton<String>(
-                              value: _selectedCategory,
-                              hint: const Text('All Categories'),
-                              items: [
-                                const DropdownMenuItem(
-                                  value: null,
-                                  child: Text('All'),
+                          ),
+                          const SizedBox(width: 16),
+                          DropdownButton<String>(
+                            value: _selectedCategory,
+                            hint: const Text('All Categories'),
+                            items: [
+                              const DropdownMenuItem(
+                                value: null,
+                                child: Text('All'),
+                              ),
+                              ...provider.categories.map(
+                                (cat) => DropdownMenuItem(
+                                  value: cat,
+                                  child: Text(cat),
                                 ),
-                                ...provider.categories.map(
-                                  (cat) => DropdownMenuItem(
-                                    value: cat,
-                                    child: Text(cat),
-                                  ),
-                                ),
-                              ],
-                              onChanged: _onCategoryChanged,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        provider.isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : provider.error != null
-                            ? Center(child: Text('Error: ${provider.error}'))
-                            : provider.products.isEmpty
-                            ? const Center(child: Text('No products found'))
-                            : Expanded(
-                          child:
-                              _viewType == ProductViewType.table
-                                  ? _buildTableView(provider, isMobile)
-                                  : _buildCardView(provider, isMobile),
-                        ),
-                      ],
-                    ),
+                              ),
+                            ],
+                            onChanged: _onCategoryChanged,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      provider.isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : provider.error != null
+                          ? Center(child: Text('Error: ${provider.error}'))
+                          : provider.products.isEmpty
+                          ? const Center(child: Text('No products found'))
+                          : Expanded(
+                            child:
+                                _viewType == ProductViewType.table
+                                    ? _buildTableView(provider, isMobile)
+                                    : _buildCardView(provider, isMobile),
+                          ),
+                    ],
                   ),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

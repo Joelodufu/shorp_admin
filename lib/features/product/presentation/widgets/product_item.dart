@@ -10,16 +10,18 @@ class ProductImagePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: images.isNotEmpty
-          ? Image.network(
-              images[0],
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.broken_image, size: 40),
-            )
-          : const Icon(Icons.image, size: 40),
+      child:
+          images.isNotEmpty
+              ? Image.network(
+                images[0],
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                errorBuilder:
+                    (context, error, stackTrace) =>
+                        const Icon(Icons.broken_image, size: 40),
+              )
+              : const Icon(Icons.image, size: 40),
     );
   }
 }
@@ -41,17 +43,22 @@ class ProductInfo extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(name,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          name,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 4),
         Text(category, style: TextStyle(color: Colors.blueGrey[700])),
         const SizedBox(height: 4),
-        Text('\$${price.toStringAsFixed(2)}',
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.blue)),
+        Text(
+          '\₦${price.toStringAsFixed(2)}',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
       ],
     );
   }
@@ -61,7 +68,11 @@ class ProductInfo extends StatelessWidget {
 class ProductActions extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  const ProductActions({super.key, required this.onEdit, required this.onDelete});
+  const ProductActions({
+    super.key,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {

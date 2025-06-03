@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/usecases/get_products.dart';
@@ -6,26 +9,32 @@ import '../../domain/usecases/create_product.dart';
 import '../../domain/usecases/delete_product.dart';
 import '../../domain/usecases/get_categories.dart';
 import '../../domain/usecases/update_product.dart'; // <-- Add this import
-import '../../../../core/error/result.dart';
+import '../../domain/usecases/upload_product_image.dart';
 
-class ProductProvider with ChangeNotifier {
+class ProductProvider extends ChangeNotifier {
   final GetProducts getProducts;
   final GetCategories getCategories;
   final CreateProduct createProduct;
   final DeleteProduct deleteProduct;
-  final UpdateProduct updateProduct; // <-- Add this field
+  final UpdateProduct updateProduct;
+  final UploadProductImage uploadProductImage; // <-- Add this
 
   List<Product> _products = [];
   List<String> _categories = [];
   bool _isLoading = false;
   String? _error;
 
+  bool isUploading = false;
+  String? uploadError;
+  String? uploadedImageUrl;
+
   ProductProvider({
     required this.getProducts,
     required this.getCategories,
     required this.createProduct,
     required this.deleteProduct,
-    required this.updateProduct, // <-- Add this param
+    required this.updateProduct,
+    required this.uploadProductImage, // <-- Add this
   });
 
   List<Product> get products => _products;
@@ -144,5 +153,22 @@ class ProductProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> uploadImage(File image) async {
+    isUploading = true;
+    uploadError = null;
+    uploadedImageUrl = null;
+    notifyListeners();
+
+    final result = await uploadProductImage(image);
+
+    isUploading = false;
+    if (result is Success<String>) {
+      uploadedImageUrl = result.value;
+    } else if (result is Failure<String>) {
+      uploadError = result.message;
+    }
+    notifyListeners();
   }
 }

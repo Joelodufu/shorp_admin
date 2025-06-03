@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart'; // Use file_picker for desktop/mobile
 import '../../../carousel/presentation/widgets/slidebar.dart';
 import '../../data/models/product_model.dart';
 import '../../domain/entities/product.dart';
@@ -26,6 +28,8 @@ class ProductFormScreenState extends State<ProductFormScreen> {
   final _ratingController = TextEditingController();
   final _discountRateController = TextEditingController();
   final _imagesController = TextEditingController();
+  List<String> _uploadedImageUrls = [];
+  File? _pickedImage;
 
   @override
   void initState() {
@@ -39,8 +43,8 @@ class ProductFormScreenState extends State<ProductFormScreen> {
       _stockController.text = widget.product!.stock.toString();
       _ratingController.text = widget.product!.rating.toString();
       _discountRateController.text = widget.product!.discountRate.toString();
-      _imagesController.text = widget.product!.images.join(', ');
-      // Handle category selection and custom category
+      // Use product images as initial uploaded images
+      _uploadedImageUrls = List<String>.from(widget.product!.images);
       if (provider.categories.contains(widget.product!.category)) {
         _selectedCategory = widget.product!.category;
       } else {
@@ -112,7 +116,13 @@ class ProductFormScreenState extends State<ProductFormScreen> {
           controller: _priceController,
           decoration: const InputDecoration(
             labelText: 'Price',
-            prefixIcon: Icon(Icons.attach_money),
+            prefixIcon: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                "₦",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+              ),
+            ),
             border: OutlineInputBorder(),
           ),
           keyboardType: TextInputType.number,
@@ -306,18 +316,16 @@ class ProductFormScreenState extends State<ProductFormScreen> {
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 try {
-                  final imageUrls =
-                      _imagesController.text
-                          .split(',')
-                          .map((e) => e.trim())
-                          .where((e) => e.isNotEmpty)
-                          .toList();
-
+                  if (_uploadedImageUrls.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please upload at least one image.')),
+                    );
+                    return;
+                  }
                   final category =
                       _selectedCategory == 'Custom'
                           ? _customCategoryController.text
                           : _selectedCategory!;
-
                   // Always use the original productId if editing
                   final int updatingProductId = widget.product?.productId ?? 0;
 
@@ -337,30 +345,29 @@ class ProductFormScreenState extends State<ProductFormScreen> {
                         _discountRateController.text.isNotEmpty
                             ? double.parse(_discountRateController.text)
                             : 0,
-                    images: imageUrls,
+                    images: _uploadedImageUrls, // <-- use uploaded images
                     createdAt: widget.product?.createdAt ?? '',
                     updatedAt: widget.product?.updatedAt ?? '',
                   );
 
-                  final debugModel = ProductModel(
-                    id: newProduct.id,
-                    productId: newProduct.productId,
-                    name: newProduct.name,
-                    description: newProduct.description,
-                    price: newProduct.price,
-                    category: newProduct.category,
-                    stock: newProduct.stock,
-                    rating: newProduct.rating,
-                    discountRate: newProduct.discountRate,
-                    images: newProduct.images,
-                    createdAt: newProduct.createdAt,
-                    updatedAt: newProduct.updatedAt,
-                  );
+                  // final debugModel = ProductModel(
+                  //   id: newProduct.id,
+                  //   productId: newProduct.productId,
+                  //   name: newProduct.name,
+                  //   description: newProduct.description,
+                  //   price: newProduct.price,
+                  //   category: newProduct.category,
+                  //   stock: newProduct.stock,
+                  //   rating: newProduct.rating,
+                  //   discountRate: newProduct.discountRate,
+                  //   images: newProduct.images,
+                  //   createdAt: newProduct.createdAt,
+                  //   updatedAt: newProduct.updatedAt,
+                  // );
 
                   // LOGGING: Print product details before update
                   print('--- Product Update Debug ---');
                   print('productId: $updatingProductId');
-                  print('Product JSON: ${debugModel.toJson()}');
                   print('----------------------------');
 
                   final provider = Provider.of<ProductProvider>(
@@ -395,6 +402,68 @@ class ProductFormScreenState extends State<ProductFormScreen> {
             },
           );
 
+  // Image upload logic using file_picker for cross-platform
+  Future<void> _pickAndUploadImage(ProductProvider provider) async {
+    // Calculate how many more images can be uploaded
+    final remaining = 5 - _uploadedImageUrls.length;
+    if (remaining <= 0) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      // Only pick up to the allowed number of images
+      final filesToUpload = result.files.take(remaining);
+
+      for (final file in filesToUpload) {
+        if (file.path != null) {
+          setState(() {
+            _pickedImage = File(file.path!);
+          });
+          await provider.uploadImage(_pickedImage!);
+          if (provider.uploadedImageUrl != null) {
+            setState(() {
+              _uploadedImageUrls.add(provider.uploadedImageUrl!);
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image uploaded!')),
+            );
+          } else if (provider.uploadError != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Upload failed: ${provider.uploadError}')),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // Widget to show uploaded images as thumbnails
+  Widget _buildUploadedImages() {
+    return Wrap(
+      spacing: 8,
+      children: _uploadedImageUrls.map((url) => Stack(
+        alignment: Alignment.topRight,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(url, height: 80, width: 80, fit: BoxFit.cover),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18, color: Colors.red),
+            onPressed: () {
+              setState(() {
+                _uploadedImageUrls.remove(url);
+              });
+            },
+          ),
+        ],
+      )).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<ProductProvider>(context);
@@ -410,11 +479,15 @@ class ProductFormScreenState extends State<ProductFormScreen> {
         title: Text(widget.product == null ? 'Add Product' : 'Edit Product'),
         leading:
             isMobile
-                ? IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () {
-                    Scaffold.of(context).openDrawer();
-                  },
+                ? Builder(
+                  builder: (drawerContext) {
+                    return IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () {
+                        Scaffold.of(drawerContext).openDrawer();
+                      },
+                    );
+                  }
                 )
                 : null,
       ),
@@ -482,7 +555,42 @@ class ProductFormScreenState extends State<ProductFormScreen> {
                                 _buildCustomCategoryField(),
                               ],
                               const SizedBox(height: 16),
-                              _buildImagesField(),
+                              // --- Image upload section ---
+                              Consumer<ProductProvider>(
+                                builder: (context, provider, _) => Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    ElevatedButton.icon(
+                                      icon: const Icon(Icons.cloud_upload),
+                                      label: Text(
+                                        _uploadedImageUrls.length >= 5
+                                            ? 'Maximum 5 Images'
+                                            : 'Upload Image to Cloudinary',
+                                      ),
+                                      onPressed: provider.isUploading || _uploadedImageUrls.length >= 5
+                                          ? null
+                                          : () => _pickAndUploadImage(provider),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue[800],
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                    if (provider.isUploading)
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                                        child: LinearProgressIndicator(),
+                                      ),
+                                    if (_uploadedImageUrls.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
+                                      _buildUploadedImages(),
+                                    ],
+                                  ],
+                                ),
+                              ),
                               const SizedBox(height: 32),
                               // Submit button
                               _buildSubmitButton(provider),
