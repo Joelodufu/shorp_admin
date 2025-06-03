@@ -103,6 +103,41 @@ class _ProductListScreenState extends State<ProductListScreen> {
     }
   }
 
+  Widget _buildTableSkeleton(bool isMobile) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columnSpacing: isMobile ? 12 : 24,
+        headingRowColor: MaterialStateProperty.all(Colors.blue[50]),
+        columns: const [
+          DataColumn(label: Text('Image')),
+          DataColumn(label: Text('Name')),
+          DataColumn(label: Text('Price')),
+          DataColumn(label: Text('Category')),
+          DataColumn(label: Text('Actions')),
+        ],
+        rows: List.generate(
+          6,
+          (index) => DataRow(
+            cells: List.generate(
+              5,
+              (i) => DataCell(
+                Container(
+                  height: 20,
+                  width: i == 0 ? 40 : 80,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // Use modular widgets in table view
   Widget _buildTableView(ProductProvider provider, bool isMobile) {
     return SingleChildScrollView(
@@ -165,13 +200,63 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  Widget _buildCardSkeleton(bool isMobile) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isMobile ? 2 : 3,
+        childAspectRatio: 0.65,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: 6,
+      itemBuilder:
+          (context, index) => Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 100,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(height: 16, width: 80, color: Colors.grey[300]),
+                  const SizedBox(height: 8),
+                  Container(height: 14, width: 60, color: Colors.grey[300]),
+                  const Spacer(),
+                  Container(
+                    height: 36,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
   // Use modular widgets in card view
   Widget _buildCardView(ProductProvider provider, bool isMobile) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isMobile ? 1 : 3,
+        crossAxisCount: isMobile ? 2 : 3,
         childAspectRatio: 0.65,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
@@ -305,7 +390,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       ),
                       const SizedBox(height: 16),
                       provider.isLoading
-                          ? const Center(child: CircularProgressIndicator())
+                          ? Expanded(
+                              child: _viewType == ProductViewType.table
+                                  ? _buildTableSkeleton(isMobile)
+                                  : _buildCardSkeleton(isMobile),
+                            )
                           : provider.error != null
                           ? Center(child: Text('Error: ${provider.error}'))
                           : provider.products.isEmpty
