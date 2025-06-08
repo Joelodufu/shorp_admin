@@ -118,16 +118,18 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
             Text(isUpdate ? 'Edit Carousel' : 'Add Carousel'),
           ],
         ),
-        leading: isMobile
-            ? Builder(
-                builder: (drawerContext) => IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () {
-                    Scaffold.of(drawerContext).openDrawer();
-                  },
-                ),
-              )
-            : null,
+        leading:
+            isMobile
+                ? Builder(
+                  builder:
+                      (drawerContext) => IconButton(
+                        icon: const Icon(Icons.menu),
+                        onPressed: () {
+                          Scaffold.of(drawerContext).openDrawer();
+                        },
+                      ),
+                )
+                : null,
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.blue),
@@ -137,13 +139,14 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
           fontSize: 20,
         ),
       ),
-      drawer: isMobile
-          ? Drawer(
-              child: SafeArea(
-                child: Container(color: Colors.blue, child: const Sidebar()),
-              ),
-            )
-          : null,
+      drawer:
+          isMobile
+              ? Drawer(
+                child: SafeArea(
+                  child: Container(color: Colors.blue, child: const Sidebar()),
+                ),
+              )
+              : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final padding = isMobile ? 12.0 : 32.0;
@@ -199,7 +202,8 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                               ],
                               onChanged: (value) {
                                 setState(() {
-                                  _selectedCategory = value == '' ? null : value;
+                                  _selectedCategory =
+                                      value == '' ? null : value;
                                 });
                                 _filterProducts(productProvider);
                               },
@@ -213,17 +217,25 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                 prefixIcon: Icon(Icons.search),
                                 border: OutlineInputBorder(),
                               ),
-                              onChanged: (value) => _filterProducts(productProvider),
+                              onChanged:
+                                  (value) => _filterProducts(productProvider),
                             ),
                             // --- Show search results as a list ---
                             if (_searchController.text.isNotEmpty &&
                                 _filteredProducts.isNotEmpty)
                               Container(
-                                constraints: const BoxConstraints(maxHeight: 200),
-                                margin: const EdgeInsets.only(top: 8, bottom: 8),
+                                constraints: const BoxConstraints(
+                                  maxHeight: 200,
+                                ),
+                                margin: const EdgeInsets.only(
+                                  top: 8,
+                                  bottom: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                   boxShadow: [
                                     BoxShadow(
@@ -239,24 +251,40 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                   itemBuilder: (context, index) {
                                     final product = _filteredProducts[index];
                                     return ListTile(
-                                      leading: product.images.isNotEmpty
-                                          ? ClipRRect(
-                                              borderRadius: BorderRadius.circular(6),
-                                              child: Image.network(
-                                                product.images.first,
-                                                width: 40,
-                                                height: 40,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) =>
-                                                    const Icon(Icons.image),
+                                      leading:
+                                          product.images.isNotEmpty
+                                              ? ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                child: Image.network(
+                                                  product.images.first,
+                                                  width: 40,
+                                                  height: 40,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) => const Icon(
+                                                        Icons.image,
+                                                      ),
+                                                ),
+                                              )
+                                              : const Icon(Icons.image),
+                                      title: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              product.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
                                               ),
-                                            )
-                                          : const Icon(Icons.image),
-                                      title: Text(
-                                        product.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       subtitle: Text(
                                         'ID: ${product.productId} | ₦${product.price.toStringAsFixed(2)}',
@@ -267,7 +295,8 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                       ),
                                       onTap: () {
                                         setState(() {
-                                          _selectedProductId = product.productId;
+                                          _selectedProductId =
+                                              product.productId;
                                           _searchController.text = product.name;
                                         });
                                       },
@@ -281,43 +310,60 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                           Builder(
                             builder: (context) {
                               // Ensure unique products for dropdown
-                              final uniqueProducts = {
-                                for (var p in _filteredProducts) p.productId: p
-                              }.values.toList();
+                              final uniqueProducts =
+                                  {
+                                    for (var p in _filteredProducts)
+                                      p.productId: p,
+                                  }.values.toList();
 
                               if (_selectedProductId != null &&
-                                  !uniqueProducts.any((p) => p.productId == _selectedProductId)) {
+                                  !uniqueProducts.any(
+                                    (p) => p.productId == _selectedProductId,
+                                  )) {
                                 _selectedProductId = null;
                               }
 
                               // For update, show only the selected product in the dropdown
-                              final dropdownItems = isUpdate
-                                  ? [
-                                      DropdownMenuItem<int>(
-                                        value: widget.carousel!.productId,
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.shopping_cart, color: Colors.blue[300], size: 18),
-                                            const SizedBox(width: 8),
-                                            Text('${productProvider.products.firstWhere((p) => p.productId == widget.carousel!.productId, orElse: () => Product(id: '', productId: widget.carousel!.productId, name: 'Unknown', description: '', price: 0, category: '', stock: 0, rating: 0, discountRate: 0, images: [], createdAt: '', updatedAt: '')).name} (ID: ${widget.carousel!.productId})'),
-                                          ],
-                                        ),
-                                      ),
-                                    ]
-                                  : uniqueProducts
-                                      .map(
-                                        (product) => DropdownMenuItem<int>(
-                                          value: product.productId,
+                              final dropdownItems =
+                                  isUpdate
+                                      ? [
+                                        DropdownMenuItem<int>(
+                                          value: widget.carousel!.productId,
                                           child: Row(
                                             children: [
-                                              Icon(Icons.shopping_cart, color: Colors.blue[300], size: 18),
+                                              Icon(
+                                                Icons.shopping_cart,
+                                                color: Colors.blue[300],
+                                                size: 18,
+                                              ),
                                               const SizedBox(width: 8),
-                                              Text('${product.name} (ID: ${product.productId})'),
+                                              Text(
+                                                '${productProvider.products.firstWhere((p) => p.productId == widget.carousel!.productId, orElse: () => Product(id: '', productId: widget.carousel!.productId, name: 'Unknown', description: '', price: 0, category: '', stock: 0, rating: 0, discountRate: 0, images: [], createdAt: '', updatedAt: '')).name} (ID: ${widget.carousel!.productId})',
+                                              ),
                                             ],
                                           ),
                                         ),
-                                      )
-                                      .toList();
+                                      ]
+                                      : uniqueProducts
+                                          .map(
+                                            (product) => DropdownMenuItem<int>(
+                                              value: product.productId,
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.shopping_cart,
+                                                    color: Colors.blue[300],
+                                                    size: 18,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    '${product.name} (ID: ${product.productId})',
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          )
+                                          .toList();
 
                               return DropdownButtonFormField<int>(
                                 value: _selectedProductId,
@@ -327,15 +373,19 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                   border: OutlineInputBorder(),
                                 ),
                                 items: dropdownItems,
-                                onChanged: isUpdate
-                                    ? null // Disable changing product on update
-                                    : (value) {
-                                        setState(() {
-                                          _selectedProductId = value;
-                                        });
-                                      },
-                                validator: (value) =>
-                                    value == null ? 'Please select a product' : null,
+                                onChanged:
+                                    isUpdate
+                                        ? null // Disable changing product on update
+                                        : (value) {
+                                          setState(() {
+                                            _selectedProductId = value;
+                                          });
+                                        },
+                                validator:
+                                    (value) =>
+                                        value == null
+                                            ? 'Please select a product'
+                                            : null,
                               );
                             },
                           ),
@@ -367,23 +417,37 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                               ),
                               const SizedBox(width: 12),
                               Consumer<CarouselProvider>(
-                                builder: (context, provider, _) => ElevatedButton.icon(
-                                  icon: const Icon(Icons.cloud_upload),
-                                  label: Text(
-                                    provider.isUploading ? 'Uploading...' : 'Upload Image',
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: provider.isUploading ? Colors.grey : Colors.blue,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  onPressed: provider.isUploading
-                                      ? null
-                                      : () => _pickAndUploadImage(provider),
-                                ),
+                                builder:
+                                    (context, provider, _) =>
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.cloud_upload),
+                                          label: Text(
+                                            provider.isUploading
+                                                ? 'Uploading...'
+                                                : 'Upload Image',
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                provider.isUploading
+                                                    ? Colors.grey
+                                                    : Colors.blue,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 14,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          onPressed:
+                                              provider.isUploading
+                                                  ? null
+                                                  : () => _pickAndUploadImage(
+                                                    provider,
+                                                  ),
+                                        ),
                               ),
                             ],
                           ),
@@ -397,8 +461,12 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                   height: 120,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.broken_image, size: 60),
+                                  errorBuilder:
+                                      (context, error, stackTrace) =>
+                                          const Icon(
+                                            Icons.broken_image,
+                                            size: 60,
+                                          ),
                                 ),
                               ),
                             ),
@@ -408,11 +476,17 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
@@ -426,7 +500,9 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                   );
 
                                   if (widget.carousel == null) {
-                                    carouselProvider.createCarousel(newCarousel);
+                                    carouselProvider.createCarousel(
+                                      newCarousel,
+                                    );
                                   } else {
                                     carouselProvider.updateCarousel(
                                       widget.carousel!.productId,
@@ -441,7 +517,9 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                 }
                               }
                             },
-                            label: Text(isUpdate ? 'Update Carousel' : 'Create Carousel'),
+                            label: Text(
+                              isUpdate ? 'Update Carousel' : 'Create Carousel',
+                            ),
                           ),
                         ],
                       ),

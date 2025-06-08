@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/carousel.dart';
 import '../../../product/domain/entities/product.dart';
 
@@ -29,10 +30,12 @@ class CarouselItem extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
             child: AspectRatio(
               aspectRatio: 16 / 7,
-              child: Image.network(
-                carousel.imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: carousel.imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
+                placeholder: (context, url) =>
+                    const Center(child: CircularProgressIndicator()),
+                errorWidget: (context, error, stackTrace) =>
                     const Icon(Icons.broken_image, size: 60),
               ),
             ),
@@ -71,12 +74,14 @@ class CarouselItem extends StatelessWidget {
               color: Colors.grey[100],
               child: ListTile(
                 leading: product!.images.isNotEmpty
-                    ? Image.network(
-                        product!.images.first,
+                    ? CachedNetworkImage(
+                        imageUrl: product!.images.first,
                         width: 48,
                         height: 48,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
+                        placeholder: (context, url) =>
+                            const Center(child: CircularProgressIndicator()),
+                        errorWidget: (context, error, stackTrace) =>
                             const Icon(Icons.image),
                       )
                     : const Icon(Icons.image),
