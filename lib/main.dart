@@ -3,20 +3,25 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/utils/constants.dart';
+import 'core/widgets/connection_status_banner.dart';
 import 'features/carousel/data/datasources/carousel_remote_data_source.dart';
+import 'features/carousel/data/datasources/carousel_local_data_source.dart';
 import 'features/carousel/data/repositories/carousel_repository_impl.dart';
 import 'features/carousel/domain/entities/carousel.dart';
 import 'features/carousel/domain/usecases/create_carousel.dart';
 import 'features/carousel/domain/usecases/delete_carousel.dart';
 import 'features/carousel/domain/usecases/get_carousels.dart';
 import 'features/carousel/domain/usecases/update_carousel.dart';
+import 'features/carousel/domain/usecases/upload_carousel_image.dart';
 import 'features/carousel/presentation/providers/carousel_provider.dart';
 import 'features/carousel/presentation/screens/carousel_form_screen.dart';
 import 'features/carousel/presentation/screens/carousel_list_screen.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'features/product/data/datasources/product_remote_data_source.dart';
+import 'features/product/data/datasources/product_local_data_source.dart';
 import 'features/product/data/repositories/product_repository_impl.dart';
 import 'features/product/domain/entities/product.dart';
 import 'features/product/domain/usecases/create_product.dart';
@@ -28,11 +33,10 @@ import 'features/product/domain/usecases/upload_product_image.dart';
 import 'features/product/presentation/providers/product_provider.dart';
 import 'features/product/presentation/screens/product_form_screen.dart';
 import 'features/product/presentation/screens/product_list_screen.dart';
-import 'injection_container.dart';
 
-void main() {
-  // Initialize all dependencies before running the app
-  InjectionContainer.init();
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await InjectionContainer.init();
   runApp(
     DevicePreview(
       enabled: true, // Set to false in production
@@ -46,24 +50,32 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Provide all registered providers to the widget tree
     return MultiProvider(
       providers: InjectionContainer.getProviders(),
       child: MaterialApp(
         title: 'Admin Panel',
-        
         useInheritedMediaQuery: true,
-        builder: DevicePreview.appBuilder,
-        debugShowCheckedModeBanner: false, // Remove the debug banner
+        builder: (context, child) {
+          return Stack(
+            children: [
+              child!,
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: ConnectionStatusBanner(),
+              ),
+            ],
+          );
+        },
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
         initialRoute: AppRoutes.dashboard,
         routes: {
-          // Define named routes for navigation
           AppRoutes.dashboard: (context) => const DashboardScreen(),
           AppRoutes.products: (context) => const ProductListScreen(),
-          AppRoutes.carousels: (context) => const CarouselListScreen(),
+          AppRoutes.carousel: (context) => const CarouselListScreen(),
         },
-        // Handle dynamic route generation for forms
         onGenerateRoute: (settings) {
           if (settings.name == '/product_form') {
             final product = settings.arguments as Product?;
@@ -77,23 +89,22 @@ class MyApp extends StatelessWidget {
               builder: (context) => CarouselFormScreen(carousel: carousel),
             );
           }
-          // Fallback for unknown routes
           return MaterialPageRoute(
-            builder: (context) => Scaffold(
-              body: Center(child: Text('Route ${settings.name} not found')),
-            ),
+            builder:
+                (context) => Scaffold(
+                  body: Center(child: Text('Route ${settings.name} not found')),
+                ),
           );
         },
-        // Handle completely unknown routes
         onUnknownRoute: (settings) {
           print('Unknown route: ${settings.name}');
           return MaterialPageRoute(
-            builder: (context) => Scaffold(
-              body: Center(child: Text('Route ${settings.name} not found')),
-            ),
+            builder:
+                (context) => Scaffold(
+                  body: Center(child: Text('Route ${settings.name} not found')),
+                ),
           );
         },
-        // Custom navigator observer for logging navigation events
         navigatorObservers: [MyNavigatorObserver()],
       ),
     );
@@ -120,45 +131,10 @@ class MyNavigatorObserver extends NavigatorObserver {
   }
 }
 
-// Simple dependency injection container for registering and retrieving singletons
+// Updated dependency injection container
 class InjectionContainer {
   static final Map<Type, dynamic> _instances = {};
 
-  // Initializes and registers all dependencies for the app
-  static void init() {
-    // Create Dio HTTP client
-    final dio = Dio();
-
-    // Create the data source and repository once
-    final productRemoteDataSource = ProductRemoteDataSourceImpl(dio: dio);
-    final productRepository = ProductRepositoryImpl(remoteDataSource: productRemoteDataSource);
-
-    // Register ProductProvider and its dependencies
-    _instances[ProductProvider] = ProductProvider(
-      getProducts: GetProducts(productRepository),
-      getCategories: GetCategories(productRepository),
-      createProduct: CreateProduct(productRepository),
-      deleteProduct: DeleteProduct(productRepository),
-      updateProduct: UpdateProduct(productRepository),
-      uploadProductImage: UploadProductImage(productRepository), // <-- Add this line
-    );
- 
-    // Register CarouselProvider and its dependencies
-    final carouselRepository = CarouselRepositoryImpl(
-      remoteDataSource: CarouselRemoteDataSourceImpl(dio: dio),
-    );
-    _instances[CarouselProvider] = CarouselProvider(
-      getCarousels: GetCarousels(carouselRepository),
-      createCarousel: CreateCarousel(carouselRepository),
-      updateCarousel: UpdateCarousel(carouselRepository),
-      deleteCarousel: DeleteCarousel(carouselRepository),
-    );
-
-    // Register DashboardProvider
-    _instances[DashboardProvider] = DashboardProvider();
-  }
-
-  // Retrieve a registered instance by type
   static T get<T>() {
     final instance = _instances[T];
     if (instance == null) {
@@ -167,7 +143,58 @@ class InjectionContainer {
     return instance as T;
   }
 
-  // Returns a list of providers for MultiProvider
+  static void register<T>(T instance) {
+    _instances[T] = instance;
+  }
+
+  // Now async to allow for SharedPreferences
+  static Future<void> init() async {
+    final dio = Dio();
+    final sharedPreferences = await SharedPreferences.getInstance();
+
+    // Product Feature
+    final productRemoteDataSource = ProductRemoteDataSourceImpl(dio: dio);
+    final productLocalDataSource = ProductLocalDataSourceImpl(
+      sharedPreferences: sharedPreferences,
+    );
+    final productRepository = ProductRepositoryImpl(
+      remoteDataSource: productRemoteDataSource,
+      localDataSource: productLocalDataSource,
+    );
+    register<ProductProvider>(
+      ProductProvider(
+        getProducts: GetProducts(productRepository),
+        getCategories: GetCategories(productRepository),
+        createProduct: CreateProduct(productRepository),
+        deleteProduct: DeleteProduct(productRepository),
+        updateProduct: UpdateProduct(productRepository),
+        uploadProductImage: UploadProductImage(productRepository),
+      ),
+    );
+
+    // Carousel Feature
+    final carouselRemoteDataSource = CarouselRemoteDataSourceImpl(dio: dio);
+    final carouselLocalDataSource = CarouselLocalDataSourceImpl(
+      sharedPreferences: sharedPreferences,
+    );
+    final carouselRepository = CarouselRepositoryImpl(
+      remoteDataSource: carouselRemoteDataSource,
+      localDataSource: carouselLocalDataSource,
+    );
+    register<CarouselProvider>(
+      CarouselProvider(
+        getCarousels: GetCarousels(carouselRepository),
+        createCarousel: CreateCarousel(carouselRepository),
+        updateCarousel: UpdateCarousel(carouselRepository),
+        deleteCarousel: DeleteCarousel(carouselRepository),
+        uploadCarouselImage: UploadCarouselImage(carouselRepository),
+      ),
+    );
+
+    // Dashboard Feature
+    register<DashboardProvider>(DashboardProvider());
+  }
+
   static List<SingleChildWidget> getProviders() {
     return [
       ChangeNotifierProvider<ProductProvider>.value(

@@ -3,15 +3,18 @@ import 'dart:io';
 import '../../../../core/error/result.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
+import '../datasources/product_local_data_source.dart';
 import '../datasources/product_remote_data_source.dart';
 import '../models/product_model.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource remoteDataSource;
+  final ProductLocalDataSource localDataSource; // Add this line
 
-  ProductRepositoryImpl({required this.remoteDataSource});
-
-  
+  ProductRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource, // Add this line
+  });
 
   @override
   Future<Result<List<Product>>> getProducts({
@@ -23,13 +26,20 @@ class ProductRepositoryImpl implements ProductRepository {
         category: category,
         search: search,
       );
+      // Cache products after successful fetch
+      await localDataSource.cacheProducts(
+        products.map((e) => ProductModel.fromEntity(e)).toList(),
+      );
       return Success(products);
     } catch (e) {
-      return  Failure('Failed to fetch products');
+      // On error, try to get from cache
+      final cached = await localDataSource.getCachedProducts();
+      if (cached.isNotEmpty) {
+        return Success(cached);
+      }
+      return Failure('Failed to fetch products');
     }
   }
-
-
 
   @override
   Future<Result<List<String>>> getCategories() async {
@@ -97,6 +107,7 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Result<void>> deleteProduct(int productId) async {
     try {
       await remoteDataSource.deleteProduct(productId);
+      await localDataSource.clearCachedProducts(); // Clear cache after delete
       return const Success(null);
     } catch (e) {
       return const Failure('Failed to delete product');

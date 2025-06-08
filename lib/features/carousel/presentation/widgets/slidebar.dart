@@ -47,9 +47,9 @@ class Sidebar extends StatelessWidget {
         buildListTile(
           icon: Icons.image,
           title: 'Carousels',
-          route: AppRoutes.carousels,
+          route: AppRoutes.carousel,
           isSelected:
-              ModalRoute.of(context)?.settings.name == AppRoutes.carousels,
+              ModalRoute.of(context)?.settings.name == AppRoutes.carousel,
         ),
       ],
     );

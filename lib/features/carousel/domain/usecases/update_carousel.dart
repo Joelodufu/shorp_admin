@@ -10,13 +10,13 @@ class UpdateCarousel implements UseCase<Carousel, UpdateCarouselParams> {
 
   @override
   Future<Result<Carousel>> call(UpdateCarouselParams params) async {
-    return await repository.updateCarousel(params.carouselId, params.carousel);
+    return await repository.updateCarousel(params.productId, params.carousel);
   }
 }
 
 class UpdateCarouselParams {
-  final int carouselId;
+  final int productId;
   final Carousel carousel;
 
-  UpdateCarouselParams({required this.carouselId, required this.carousel});
+  UpdateCarouselParams({required this.productId, required this.carousel});
 }

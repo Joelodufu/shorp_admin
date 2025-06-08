@@ -2,24 +2,28 @@ import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'features/product/data/datasources/product_remote_data_source.dart';
+import 'features/product/data/datasources/product_local_data_source.dart'; // <-- Add this import
 import 'features/product/data/repositories/product_repository_impl.dart';
 import 'features/product/domain/repositories/product_repository.dart';
 import 'features/product/domain/usecases/get_products.dart';
 import 'features/product/domain/usecases/create_product.dart';
 import 'features/product/domain/usecases/delete_product.dart';
 import 'features/product/domain/usecases/get_categories.dart';
-import 'features/product/domain/usecases/update_product.dart'; // <-- Add this import
-import 'features/product/domain/usecases/upload_product_image.dart'; // <-- Add this import
+import 'features/product/domain/usecases/update_product.dart';
+import 'features/product/domain/usecases/upload_product_image.dart';
 import 'features/product/presentation/providers/product_provider.dart';
 import 'features/carousel/data/datasources/carousel_remote_data_source.dart';
+import 'features/carousel/data/datasources/carousel_local_data_source.dart'; // <-- Add this import
 import 'features/carousel/data/repositories/carousel_repository_impl.dart';
 import 'features/carousel/domain/repositories/carousel_repository.dart';
 import 'features/carousel/domain/usecases/get_carousels.dart';
 import 'features/carousel/domain/usecases/create_carousel.dart';
 import 'features/carousel/domain/usecases/update_carousel.dart';
 import 'features/carousel/domain/usecases/delete_carousel.dart';
+import 'features/carousel/domain/usecases/upload_carousel_image.dart'; // <-- Add this import
 import 'features/carousel/presentation/providers/carousel_provider.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <-- Add this import
 
 class InjectionContainer {
   static final Map<Type, dynamic> _instances = {};
@@ -36,17 +40,25 @@ class InjectionContainer {
     _instances[T] = instance;
   }
 
-  static void init() {
+  static Future<void> init() async {
     // Core
     final dio = Dio();
     register<Dio>(dio);
+
+    // Shared Preferences (for local data sources)
+    final sharedPreferences = await SharedPreferences.getInstance();
+    register<SharedPreferences>(sharedPreferences);
 
     // Product Feature
     final productRemoteDataSource = ProductRemoteDataSourceImpl(dio: dio);
     register<ProductRemoteDataSource>(productRemoteDataSource);
 
+    final productLocalDataSource = ProductLocalDataSourceImpl(sharedPreferences: sharedPreferences); // <-- Add this
+    register<ProductLocalDataSource>(productLocalDataSource);
+
     final productRepository = ProductRepositoryImpl(
       remoteDataSource: productRemoteDataSource,
+      localDataSource: productLocalDataSource, // <-- Add this
     );
     register<ProductRepository>(productRepository);
 
@@ -55,7 +67,7 @@ class InjectionContainer {
     register<CreateProduct>(CreateProduct(productRepository));
     register<DeleteProduct>(DeleteProduct(productRepository));
     register<UpdateProduct>(UpdateProduct(productRepository));
-    register<UploadProductImage>(UploadProductImage(productRepository)); // <-- Register UploadProductImage
+    register<UploadProductImage>(UploadProductImage(productRepository));
 
     register<ProductProvider>(
       ProductProvider(
@@ -64,7 +76,7 @@ class InjectionContainer {
         createProduct: get<CreateProduct>(),
         deleteProduct: get<DeleteProduct>(),
         updateProduct: get<UpdateProduct>(),
-        uploadProductImage: get<UploadProductImage>(), // <-- Inject here
+        uploadProductImage: get<UploadProductImage>(),
       ),
     );
 
@@ -72,8 +84,12 @@ class InjectionContainer {
     final carouselRemoteDataSource = CarouselRemoteDataSourceImpl(dio: dio);
     register<CarouselRemoteDataSource>(carouselRemoteDataSource);
 
+    final carouselLocalDataSource = CarouselLocalDataSourceImpl(sharedPreferences: sharedPreferences); // <-- Add this
+    register<CarouselLocalDataSource>(carouselLocalDataSource);
+
     final carouselRepository = CarouselRepositoryImpl(
       remoteDataSource: carouselRemoteDataSource,
+      localDataSource: carouselLocalDataSource, // <-- Add this
     );
     register<CarouselRepository>(carouselRepository);
 
@@ -81,6 +97,7 @@ class InjectionContainer {
     register<CreateCarousel>(CreateCarousel(carouselRepository));
     register<UpdateCarousel>(UpdateCarousel(carouselRepository));
     register<DeleteCarousel>(DeleteCarousel(carouselRepository));
+    register<UploadCarouselImage>(UploadCarouselImage(carouselRepository)); // <-- Add this
 
     register<CarouselProvider>(
       CarouselProvider(
@@ -88,6 +105,7 @@ class InjectionContainer {
         createCarousel: get<CreateCarousel>(),
         updateCarousel: get<UpdateCarousel>(),
         deleteCarousel: get<DeleteCarousel>(),
+        uploadCarouselImage: get<UploadCarouselImage>(), // <-- Add this
       ),
     );
 

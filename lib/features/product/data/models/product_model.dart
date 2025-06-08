@@ -32,7 +32,10 @@ class ProductModel extends Product {
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
       id: json['_id']?.toString() ?? '',
-      productId: json['id'] ?? 0,
+      productId:
+          json['id'] is int
+              ? json['id']
+              : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       name: json['name']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       price:
@@ -55,16 +58,37 @@ class ProductModel extends Product {
               ? json['discountRate'].toDouble()
               : double.tryParse(json['discountRate']?.toString() ?? '0')) ??
           0.0,
-      images: (json['images'] as List<dynamic>?)?.cast<String>() ?? [],
+      images:
+          (json['images'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       createdAt: json['createdAt']?.toString() ?? '',
       updatedAt: json['updatedAt']?.toString() ?? '',
+    );
+  }
+
+  factory ProductModel.fromEntity(Product product) {
+    return ProductModel(
+      id: product.id,
+      productId: product.productId,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      category: product.category,
+      stock: product.stock,
+      rating: product.rating,
+      discountRate: product.discountRate,
+      images: product.images,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
-      'productId': productId,
+      'id': productId,
       'name': name,
       'description': description,
       'price': price,

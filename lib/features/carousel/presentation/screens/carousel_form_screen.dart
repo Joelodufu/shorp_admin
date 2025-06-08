@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../product/domain/entities/product.dart';
+import '../../../product/presentation/providers/product_provider.dart';
 import '../../domain/entities/carousel.dart';
 import '../providers/carousel_provider.dart';
 import '../widgets/slidebar.dart';
+import 'package:file_picker/file_picker.dart';
 
 class CarouselFormScreen extends StatefulWidget {
   final Carousel? carousel;
@@ -15,64 +19,134 @@ class CarouselFormScreen extends StatefulWidget {
 
 class CarouselFormScreenState extends State<CarouselFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
   final _imageUrlController = TextEditingController();
-  final _linkController = TextEditingController();
+  final _searchController = TextEditingController();
+  int? _selectedProductId;
+  String? _selectedCategory;
+  File? _pickedImage;
+
+  List<Product> _filteredProducts = [];
 
   @override
   void initState() {
     super.initState();
     if (widget.carousel != null) {
-      _titleController.text = widget.carousel!.title;
       _imageUrlController.text = widget.carousel!.imageUrl;
-      _linkController.text = widget.carousel!.link;
+      _selectedProductId = widget.carousel!.productId;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProductProvider>(context, listen: false).fetchProducts();
+    });
   }
 
   @override
   void dispose() {
-    _titleController.dispose();
     _imageUrlController.dispose();
-    _linkController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _filterProducts(ProductProvider productProvider) {
+    final search = _searchController.text.trim().toLowerCase();
+    setState(() {
+      _filteredProducts =
+          productProvider.products.where((product) {
+            final matchesCategory =
+                _selectedCategory == null || _selectedCategory!.isEmpty
+                    ? true
+                    : product.category == _selectedCategory;
+            final matchesName = product.name.toLowerCase().contains(search);
+            final matchesId = product.productId.toString().contains(search);
+            return matchesCategory && (matchesName || matchesId);
+          }).toList();
+    });
+  }
+
+  Future<void> _pickAndUploadImage(CarouselProvider provider) async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _pickedImage = File(result.files.single.path!);
+      });
+      await provider.uploadCarouselImage(_pickedImage!);
+      if (provider.uploadedImageUrl != null) {
+        setState(() {
+          _imageUrlController.text = provider.uploadedImageUrl!;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Image uploaded!')));
+      } else if (provider.uploadError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: ${provider.uploadError}')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<CarouselProvider>(context);
+    final carouselProvider = Provider.of<CarouselProvider>(context);
+    final productProvider = Provider.of<ProductProvider>(context);
     final isMobile = MediaQuery.of(context).size.width <= 600;
     final isTablet =
         MediaQuery.of(context).size.width > 600 &&
         MediaQuery.of(context).size.width <= 900;
 
+    final categories =
+        productProvider.products.map((p) => p.category).toSet().toList();
+
+    // Only filter products if not updating an existing carousel
+    if (widget.carousel == null &&
+        _filteredProducts.isEmpty &&
+        productProvider.products.isNotEmpty) {
+      _filteredProducts = productProvider.products;
+    }
+
+    final isUpdate = widget.carousel != null;
+
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(widget.carousel == null ? 'Add Carousel' : 'Edit Carousel'),
-        leading:
-            isMobile
-                ? Builder(
-                  builder:
-                      (drawerContext) => IconButton(
-                        icon: const Icon(Icons.menu),
-                        onPressed: () {
-                          print('Hamburger menu tapped at ${DateTime.now()}');
-                          Scaffold.of(drawerContext).openDrawer();
-                        },
-                      ),
-                )
-                : null,
-      ),
-      drawer:
-          isMobile
-              ? Drawer(
-                child: SafeArea(
-                  child: Container(color: Colors.blue, child: const Sidebar()),
+        title: Row(
+          children: [
+            Icon(
+              isUpdate ? Icons.edit : Icons.add_photo_alternate,
+              color: Colors.blue,
+            ),
+            const SizedBox(width: 8),
+            Text(isUpdate ? 'Edit Carousel' : 'Add Carousel'),
+          ],
+        ),
+        leading: isMobile
+            ? Builder(
+                builder: (drawerContext) => IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () {
+                    Scaffold.of(drawerContext).openDrawer();
+                  },
                 ),
               )
-              : null,
+            : null,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.blue),
+        titleTextStyle: const TextStyle(
+          color: Colors.blue,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+      ),
+      drawer: isMobile
+          ? Drawer(
+              child: SafeArea(
+                child: Container(color: Colors.blue, child: const Sidebar()),
+              ),
+            )
+          : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final padding = isMobile ? 16.0 : 24.0;
+          final padding = isMobile ? 12.0 : 32.0;
           return Row(
             children: [
               if (!isMobile)
@@ -82,98 +156,295 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                   child: const Sidebar(),
                 ),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(padding),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _titleController,
-                          decoration: const InputDecoration(labelText: 'Title'),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Title is required';
-                            }
-                            if (value.trim().length < 2) {
-                              return 'Title must be at least 2 characters';
-                            }
-                            return null;
-                          },
-                        ),
-                        TextFormField(
-                          controller: _imageUrlController,
-                          decoration: const InputDecoration(
-                            labelText: 'Image URL',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Image URL is required';
-                            }
-                            if (!RegExp(
-                              r'^https?:\/\/[^\s/$.?#].[^\s]*$',
-                            ).hasMatch(value)) {
-                              return 'Invalid URL format';
-                            }
-                            return null;
-                          },
-                        ),
-                        TextFormField(
-                          controller: _linkController,
-                          decoration: const InputDecoration(
-                            labelText: 'Link (optional)',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return null;
-                            }
-                            if (!RegExp(
-                              r'^https?:\/\/[^\s/$.?#].[^\s]*$',
-                            ).hasMatch(value)) {
-                              return 'Invalid URL format';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              try {
-                                final newCarousel = Carousel(
-                                  id: widget.carousel?.id ?? '',
-                                  carouselId: widget.carousel?.carouselId ?? 0,
-                                  title: _titleController.text,
-                                  imageUrl: _imageUrlController.text,
-                                  link: _linkController.text,
-                                  createdAt: widget.carousel?.createdAt ?? '',
-                                  updatedAt: widget.carousel?.updatedAt ?? '',
-                                );
-
-                                if (widget.carousel == null) {
-                                  provider.createCarousel(newCarousel);
-                                } else {
-                                  provider.updateCarousel(
-                                    widget.carousel!.carouselId,
-                                    newCarousel,
-                                  );
-                                }
-                                Navigator.pop(context);
-                              } catch (e) {
-                                print('Error processing form: $e');
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Error: $e')),
-                                );
-                              }
-                            } else {
-                              print('Form validation failed');
-                            }
-                          },
-                          child: Text(
-                            widget.carousel == null ? 'Create' : 'Update',
-                          ),
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    padding: EdgeInsets.all(padding),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!isUpdate) ...[
+                            // --- Category selection dropdown ---
+                            DropdownButtonFormField<String>(
+                              value: _selectedCategory,
+                              decoration: const InputDecoration(
+                                labelText: 'Filter by Category',
+                                prefixIcon: Icon(Icons.category),
+                                border: OutlineInputBorder(),
+                              ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: '',
+                                  child: Text('All Categories'),
+                                ),
+                                ...categories.map(
+                                  (cat) => DropdownMenuItem<String>(
+                                    value: cat,
+                                    child: Text(cat),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedCategory = value == '' ? null : value;
+                                });
+                                _filterProducts(productProvider);
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            // --- Search by name or ID ---
+                            TextFormField(
+                              controller: _searchController,
+                              decoration: const InputDecoration(
+                                labelText: 'Search Product by Name or ID',
+                                prefixIcon: Icon(Icons.search),
+                                border: OutlineInputBorder(),
+                              ),
+                              onChanged: (value) => _filterProducts(productProvider),
+                            ),
+                            // --- Show search results as a list ---
+                            if (_searchController.text.isNotEmpty &&
+                                _filteredProducts.isNotEmpty)
+                              Container(
+                                constraints: const BoxConstraints(maxHeight: 200),
+                                margin: const EdgeInsets.only(top: 8, bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: _filteredProducts.length,
+                                  itemBuilder: (context, index) {
+                                    final product = _filteredProducts[index];
+                                    return ListTile(
+                                      leading: product.images.isNotEmpty
+                                          ? ClipRRect(
+                                              borderRadius: BorderRadius.circular(6),
+                                              child: Image.network(
+                                                product.images.first,
+                                                width: 40,
+                                                height: 40,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (context, error, stackTrace) =>
+                                                    const Icon(Icons.image),
+                                              ),
+                                            )
+                                          : const Icon(Icons.image),
+                                      title: Text(
+                                        product.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        'ID: ${product.productId} | ₦${product.price.toStringAsFixed(2)}',
+                                      ),
+                                      trailing: const Icon(
+                                        Icons.arrow_forward_ios,
+                                        size: 16,
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedProductId = product.productId;
+                                          _searchController.text = product.name;
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            const SizedBox(height: 20),
+                          ],
+                          // --- Product selection dropdown ---
+                          Builder(
+                            builder: (context) {
+                              // Ensure unique products for dropdown
+                              final uniqueProducts = {
+                                for (var p in _filteredProducts) p.productId: p
+                              }.values.toList();
+
+                              if (_selectedProductId != null &&
+                                  !uniqueProducts.any((p) => p.productId == _selectedProductId)) {
+                                _selectedProductId = null;
+                              }
+
+                              // For update, show only the selected product in the dropdown
+                              final dropdownItems = isUpdate
+                                  ? [
+                                      DropdownMenuItem<int>(
+                                        value: widget.carousel!.productId,
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.shopping_cart, color: Colors.blue[300], size: 18),
+                                            const SizedBox(width: 8),
+                                            Text('${productProvider.products.firstWhere((p) => p.productId == widget.carousel!.productId, orElse: () => Product(id: '', productId: widget.carousel!.productId, name: 'Unknown', description: '', price: 0, category: '', stock: 0, rating: 0, discountRate: 0, images: [], createdAt: '', updatedAt: '')).name} (ID: ${widget.carousel!.productId})'),
+                                          ],
+                                        ),
+                                      ),
+                                    ]
+                                  : uniqueProducts
+                                      .map(
+                                        (product) => DropdownMenuItem<int>(
+                                          value: product.productId,
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.shopping_cart, color: Colors.blue[300], size: 18),
+                                              const SizedBox(width: 8),
+                                              Text('${product.name} (ID: ${product.productId})'),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                      .toList();
+
+                              return DropdownButtonFormField<int>(
+                                value: _selectedProductId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Select Product',
+                                  prefixIcon: Icon(Icons.shopping_bag),
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: dropdownItems,
+                                onChanged: isUpdate
+                                    ? null // Disable changing product on update
+                                    : (value) {
+                                        setState(() {
+                                          _selectedProductId = value;
+                                        });
+                                      },
+                                validator: (value) =>
+                                    value == null ? 'Please select a product' : null,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          // --- Image upload button and preview ---
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _imageUrlController,
+                                  readOnly: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Image URL',
+                                    prefixIcon: Icon(Icons.link),
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Image URL is required';
+                                    }
+                                    if (!RegExp(
+                                      r'^https?:\/\/[^\s/$.?#].[^\s]*$',
+                                    ).hasMatch(value)) {
+                                      return 'Invalid URL format';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Consumer<CarouselProvider>(
+                                builder: (context, provider, _) => ElevatedButton.icon(
+                                  icon: const Icon(Icons.cloud_upload),
+                                  label: Text(
+                                    provider.isUploading ? 'Uploading...' : 'Upload Image',
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: provider.isUploading ? Colors.grey : Colors.blue,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: provider.isUploading
+                                      ? null
+                                      : () => _pickAndUploadImage(provider),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_imageUrlController.text.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  _imageUrlController.text,
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.broken_image, size: 60),
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            icon: Icon(isUpdate ? Icons.save : Icons.add),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                try {
+                                  final newCarousel = Carousel(
+                                    id: widget.carousel?.id ?? '',
+                                    productId: _selectedProductId!,
+                                    imageUrl: _imageUrlController.text,
+                                    createdAt: widget.carousel?.createdAt ?? '',
+                                    updatedAt: widget.carousel?.updatedAt ?? '',
+                                  );
+
+                                  if (widget.carousel == null) {
+                                    carouselProvider.createCarousel(newCarousel);
+                                  } else {
+                                    carouselProvider.updateCarousel(
+                                      widget.carousel!.productId,
+                                      newCarousel,
+                                    );
+                                  }
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            label: Text(isUpdate ? 'Update Carousel' : 'Create Carousel'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

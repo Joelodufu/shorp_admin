@@ -8,7 +8,7 @@ class DeleteCarousel implements UseCase<void, int> {
   DeleteCarousel(this.repository);
 
   @override
-  Future<Result<void>> call(int carouselId) async {
-    return await repository.deleteCarousel(carouselId);
+  Future<Result<void>> call(int productId) async {
+    return await repository.deleteCarousel(productId);
   }
 }
