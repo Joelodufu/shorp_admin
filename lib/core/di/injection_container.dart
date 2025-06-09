@@ -23,7 +23,8 @@ import '../../features/carousel/domain/usecases/get_carousels.dart';
 import '../../features/carousel/domain/usecases/create_carousel.dart';
 import '../../features/carousel/domain/usecases/update_carousel.dart';
 import '../../features/carousel/domain/usecases/delete_carousel.dart';
-import '../../features/carousel/domain/usecases/upload_carousel_image.dart'; // <-- Add this import
+import '../../features/carousel/domain/usecases/upload_carousel_image.dart';
+import '../provider/theme_provider.dart'; // <-- Add this import
 
 class InjectionContainer {
   static final Map<Type, dynamic> _instances = {};
@@ -48,7 +49,9 @@ class InjectionContainer {
     final productRemoteDataSource = ProductRemoteDataSourceImpl(dio: dio);
     register<ProductRemoteDataSource>(productRemoteDataSource);
 
-    final productLocalDataSource = ProductLocalDataSourceImpl(sharedPreferences: sharedPreferences); // <-- Add this
+    final productLocalDataSource = ProductLocalDataSourceImpl(
+      sharedPreferences: sharedPreferences,
+    ); // <-- Add this
     register<ProductLocalDataSource>(productLocalDataSource);
 
     final productRepository = ProductRepositoryImpl(
@@ -79,7 +82,9 @@ class InjectionContainer {
     final carouselRemoteDataSource = CarouselRemoteDataSourceImpl(dio: dio);
     register<CarouselRemoteDataSource>(carouselRemoteDataSource);
 
-    final carouselLocalDataSource = CarouselLocalDataSourceImpl(sharedPreferences: sharedPreferences); // <-- Add this
+    final carouselLocalDataSource = CarouselLocalDataSourceImpl(
+      sharedPreferences: sharedPreferences,
+    ); // <-- Add this
     register<CarouselLocalDataSource>(carouselLocalDataSource);
 
     final carouselRepository = CarouselRepositoryImpl(
@@ -92,7 +97,9 @@ class InjectionContainer {
     register<CreateCarousel>(CreateCarousel(carouselRepository));
     register<UpdateCarousel>(UpdateCarousel(carouselRepository));
     register<DeleteCarousel>(DeleteCarousel(carouselRepository));
-    register<UploadCarouselImage>(UploadCarouselImage(carouselRepository)); // <-- Add this
+    register<UploadCarouselImage>(
+      UploadCarouselImage(carouselRepository),
+    ); // <-- Add this
 
     register<CarouselProvider>(
       CarouselProvider(
@@ -110,6 +117,7 @@ class InjectionContainer {
 
   static List<SingleChildWidget> getProviders() {
     return [
+      ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
       ChangeNotifierProvider<ProductProvider>.value(
         value: get<ProductProvider>(),
       ),

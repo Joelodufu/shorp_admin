@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
 import '../../../../core/widgets/discount_badge.dart';
 import '../../../../core/widgets/rating_widget.dart';
 import '../../domain/entities/product.dart';
-import '../providers/product_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -25,11 +23,14 @@ class ProductCard extends StatelessWidget {
     final discount = product.discountRate;
     final discountedPrice = product.price - (product.price * discount / 100);
 
+    final theme = Theme.of(context);
+
     return Card(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+      color: theme.cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
       elevation: 2,
       child: InkWell(
+        borderRadius: BorderRadius.circular(10.0),
         onTap: onUpdate, // Tap card to update/edit
         child: Stack(
           children: [
@@ -37,18 +38,19 @@ class ProductCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: CachedNetworkImage(
-                    imageUrl:
-                        product.images.isNotEmpty
-                            ? product.images[0]
-                            : 'https://via.placeholder.com/150',
-                    width: double.infinity,
-                    fit: BoxFit.contain,
-                    placeholder:
-                        (context, url) =>
-                            const Center(child: CircularProgressIndicator()),
-                    errorWidget:
-                        (context, url, error) => const Icon(Icons.error),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                    child: CachedNetworkImage(
+                      imageUrl: product.images.isNotEmpty
+                          ? product.images[0]
+                          : 'https://placehold.co/150',
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) =>
+                          const Center(child: CircularProgressIndicator()),
+                      errorWidget: (context, url, error) =>
+                          Icon(Icons.broken_image, color: theme.colorScheme.error),
+                    ),
                   ),
                 ),
                 Padding(
@@ -56,37 +58,44 @@ class ProductCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        product.name,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: isMobile ? 14 : 16,
-                          color: Colors.black,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Icon(Icons.shopping_bag,
+                              color: theme.colorScheme.primary, size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              product.name,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontSize: isMobile ? 14 : 16,
+                                color: theme.textTheme.bodyLarge?.color,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Text(
-                                '₦${product.price.toStringAsFixed(2)}',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(
-                                  decoration: TextDecoration.lineThrough,
-                                  color: Colors.grey[600],
-                                  fontSize: isMobile ? 12 : 14,
+                              if (discount > 0)
+                                Text(
+                                  '₦${product.price.toStringAsFixed(2)}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: theme.disabledColor,
+                                    fontSize: isMobile ? 12 : 14,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
+                              if (discount > 0) const SizedBox(width: 8),
                               Text(
                                 '₦${discountedPrice.toStringAsFixed(2)}',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyLarge?.copyWith(
-                                  color: Colors.black,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: isMobile ? 14 : 16,
                                 ),
@@ -101,31 +110,23 @@ class ProductCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      ElevatedButton(
+                      ElevatedButton.icon(
                         onPressed: onDelete, // Delete action
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red[700],
-                          foregroundColor: Colors.white,
+                          backgroundColor: theme.colorScheme.error,
+                          foregroundColor: theme.colorScheme.onError,
                           minimumSize: const Size(double.infinity, 40),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.delete, size: 16),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Delete',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.copyWith(
-                                fontSize: isMobile ? 12 : 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                        icon: const Icon(Icons.delete, size: 16),
+                        label: Text(
+                          'Delete',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontSize: isMobile ? 12 : 14,
+                            color: theme.colorScheme.onError,
+                          ),
                         ),
                       ),
                     ],
