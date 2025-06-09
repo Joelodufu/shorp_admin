@@ -302,7 +302,7 @@ class ProductFormScreenState extends State<ProductFormScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              backgroundColor: Colors.blue[700],
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
               textStyle: const TextStyle(
                 fontSize: 18,
@@ -318,7 +318,9 @@ class ProductFormScreenState extends State<ProductFormScreen> {
                 try {
                   if (_uploadedImageUrls.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please upload at least one image.')),
+                      const SnackBar(
+                        content: Text('Please upload at least one image.'),
+                      ),
                     );
                     return;
                   }
@@ -427,9 +429,9 @@ class ProductFormScreenState extends State<ProductFormScreen> {
             setState(() {
               _uploadedImageUrls.add(provider.uploadedImageUrl!);
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Image uploaded!')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Image uploaded!')));
           } else if (provider.uploadError != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Upload failed: ${provider.uploadError}')),
@@ -444,23 +446,37 @@ class ProductFormScreenState extends State<ProductFormScreen> {
   Widget _buildUploadedImages() {
     return Wrap(
       spacing: 8,
-      children: _uploadedImageUrls.map((url) => Stack(
-        alignment: Alignment.topRight,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(url, height: 80, width: 80, fit: BoxFit.cover),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 18, color: Colors.red),
-            onPressed: () {
-              setState(() {
-                _uploadedImageUrls.remove(url);
-              });
-            },
-          ),
-        ],
-      )).toList(),
+      children:
+          _uploadedImageUrls
+              .map(
+                (url) => Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        url,
+                        height: 80,
+                        width: 80,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        size: 18,
+                        color: Colors.red,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _uploadedImageUrls.remove(url);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              )
+              .toList(),
     );
   }
 
@@ -474,7 +490,7 @@ class ProductFormScreenState extends State<ProductFormScreen> {
 
     // Main scaffold for the form screen
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(widget.product == null ? 'Add Product' : 'Edit Product'),
         leading:
@@ -487,7 +503,7 @@ class ProductFormScreenState extends State<ProductFormScreen> {
                         Scaffold.of(drawerContext).openDrawer();
                       },
                     );
-                  }
+                  },
                 )
                 : null,
       ),
@@ -495,7 +511,10 @@ class ProductFormScreenState extends State<ProductFormScreen> {
           isMobile
               ? Drawer(
                 child: SafeArea(
-                  child: Container(color: Colors.blue, child: const Sidebar()),
+                  child: Container(
+                    color: Theme.of(context).colorScheme.primary,
+                    child: const Sidebar(),
+                  ),
                 ),
               )
               : null,
@@ -507,7 +526,7 @@ class ProductFormScreenState extends State<ProductFormScreen> {
               if (!isMobile)
                 Container(
                   width: isTablet ? 80 : 200,
-                  color: Colors.blue,
+                  color: Theme.of(context).colorScheme.primary,
                   child: const Sidebar(),
                 ),
               Expanded(
@@ -535,7 +554,10 @@ class ProductFormScreenState extends State<ProductFormScreen> {
                                   context,
                                 ).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.blue[800],
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -557,39 +579,55 @@ class ProductFormScreenState extends State<ProductFormScreen> {
                               const SizedBox(height: 16),
                               // --- Image upload section ---
                               Consumer<ProductProvider>(
-                                builder: (context, provider, _) => Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    ElevatedButton.icon(
-                                      icon: const Icon(Icons.cloud_upload),
-                                      label: Text(
-                                        _uploadedImageUrls.length >= 5
-                                            ? 'Maximum 5 Images'
-                                            : 'Upload Image to Cloudinary',
-                                      ),
-                                      onPressed: provider.isUploading || _uploadedImageUrls.length >= 5
-                                          ? null
-                                          : () => _pickAndUploadImage(provider),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blue[800],
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                builder:
+                                    (context, provider, _) => Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.cloud_upload),
+                                          label: Text(
+                                            _uploadedImageUrls.length >= 5
+                                                ? 'Maximum 5 Images'
+                                                : 'Upload Image to Cloudinary',
+                                          ),
+                                          onPressed:
+                                              provider.isUploading ||
+                                                      _uploadedImageUrls
+                                                              .length >=
+                                                          5
+                                                  ? null
+                                                  : () => _pickAndUploadImage(
+                                                    provider,
+                                                  ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        if (provider.isUploading)
+                                          const Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 8.0,
+                                            ),
+                                            child: LinearProgressIndicator(),
+                                          ),
+                                        if (_uploadedImageUrls.isNotEmpty) ...[
+                                          const SizedBox(height: 12),
+                                          _buildUploadedImages(),
+                                        ],
+                                      ],
                                     ),
-                                    if (provider.isUploading)
-                                      const Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                                        child: LinearProgressIndicator(),
-                                      ),
-                                    if (_uploadedImageUrls.isNotEmpty) ...[
-                                      const SizedBox(height: 12),
-                                      _buildUploadedImages(),
-                                    ],
-                                  ],
-                                ),
                               ),
                               const SizedBox(height: 32),
                               // Submit button

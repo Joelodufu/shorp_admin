@@ -33,18 +33,19 @@ class _CarouselListScreenState extends State<CarouselListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Carousels'),
-        leading: isMobile
-            ? Builder(
-                builder: (BuildContext scaffoldContext) {
-                  return IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () {
-                      Scaffold.of(scaffoldContext).openDrawer();
-                    },
-                  );
-                },
-              )
-            : null,
+        leading:
+            isMobile
+                ? Builder(
+                  builder: (BuildContext scaffoldContext) {
+                    return IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () {
+                        Scaffold.of(scaffoldContext).openDrawer();
+                      },
+                    );
+                  },
+                )
+                : null,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -54,13 +55,17 @@ class _CarouselListScreenState extends State<CarouselListScreen> {
           ),
         ],
       ),
-      drawer: isMobile
-          ? Drawer(
-              child: SafeArea(
-                child: Container(color: Colors.blue, child: const Sidebar()),
-              ),
-            )
-          : null,
+      drawer:
+          isMobile
+              ? Drawer(
+                child: SafeArea(
+                  child: Container(
+                    color: Theme.of(context).colorScheme.primary,
+                    child: const Sidebar(),
+                  ),
+                ),
+              )
+              : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final padding = isMobile ? 16.0 : 24.0;
@@ -69,43 +74,40 @@ class _CarouselListScreenState extends State<CarouselListScreen> {
               if (!isMobile)
                 Container(
                   width: isTablet ? 80 : 200,
-                  color: Colors.blue,
+                  color: Theme.of(context).colorScheme.primary,
                   child: const Sidebar(),
                 ),
               Expanded(
-                child: provider.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : provider.error != null
+                child:
+                    provider.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : provider.error != null
                         ? Center(child: Text('Error: ${provider.error}'))
                         : provider.carousels.isEmpty
-                            ? const Center(child: Text('No carousels found'))
-                            : ListView.builder(
-                                padding: EdgeInsets.all(padding),
-                                itemCount: provider.carousels.length,
-                                itemBuilder: (context, index) {
-                                  final carousel = provider.carousels[index];
-                                  return CarouselItem(
-                                    carousel: carousel,
-                                    onEdit: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/carousel_form',
-                                        arguments: carousel,
-                                      );
-                                    },
-                                    onDelete: () {
-                                      provider.deleteCarousel(carousel.productId);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Carousel deleted',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
+                        ? const Center(child: Text('No carousels found'))
+                        : ListView.builder(
+                          padding: EdgeInsets.all(padding),
+                          itemCount: provider.carousels.length,
+                          itemBuilder: (context, index) {
+                            final carousel = provider.carousels[index];
+                            return CarouselItem(
+                              carousel: carousel,
+                              onEdit: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/carousel_form',
+                                  arguments: carousel,
+                                );
+                              },
+                              onDelete: () {
+                                provider.deleteCarousel(carousel.productId);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Carousel deleted')),
+                                );
+                              },
+                            );
+                          },
+                        ),
               ),
             ],
           );

@@ -17,6 +17,7 @@ class Sidebar extends StatelessWidget {
       required bool isSelected,
     }) {
       final listTile = ListTile(
+        selectedColor: Theme.of(context).colorScheme.surface,
         leading: Icon(icon),
         title: isCompact ? null : Text(title),
         selected: isSelected,
@@ -30,6 +31,21 @@ class Sidebar extends StatelessWidget {
 
     return ListView(
       children: [
+        Container(
+          height: 100,
+          width: 100,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+          ),
+          // child : Column(
+          //   children:[
+          //     Image.asset
+          //   ]
+          // )
+          child:Center(
+            child: Text('O L T R O N', style: TextStyle(fontSize:30, fontWeight:FontWeight.bold,))
+          )
+        ),
         buildListTile(
           icon: Icons.dashboard,
           title: 'Dashboard',

@@ -5,9 +5,9 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oltron_admin/main.dart';
+import 'package:oltron_admin/app.dart';
+import 'package:oltron_admin/core/di/injection_container.dart';
 
 void main() {
   setUp(() {

@@ -96,26 +96,21 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
     final categories =
         productProvider.products.map((p) => p.category).toSet().toList();
 
-    // Only filter products if not updating an existing carousel
-    if (widget.carousel == null &&
-        _filteredProducts.isEmpty &&
-        productProvider.products.isNotEmpty) {
+    if (_filteredProducts.isEmpty && productProvider.products.isNotEmpty) {
       _filteredProducts = productProvider.products;
     }
 
-    final isUpdate = widget.carousel != null;
-
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Row(
           children: [
             Icon(
-              isUpdate ? Icons.edit : Icons.add_photo_alternate,
-              color: Colors.blue,
+              widget.carousel == null ? Icons.add_photo_alternate : Icons.edit,
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(width: 8),
-            Text(isUpdate ? 'Edit Carousel' : 'Add Carousel'),
+            Text(widget.carousel == null ? 'Add Carousel' : 'Edit Carousel'),
           ],
         ),
         leading:
@@ -132,9 +127,11 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                 : null,
         backgroundColor: Colors.white,
         elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.blue),
-        titleTextStyle: const TextStyle(
-          color: Colors.blue,
+        iconTheme:  IconThemeData(
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        titleTextStyle:  TextStyle(
+          color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
           fontSize: 20,
         ),
@@ -143,7 +140,10 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
           isMobile
               ? Drawer(
                 child: SafeArea(
-                  child: Container(color: Colors.blue, child: const Sidebar()),
+                  child: Container(
+                    color: Theme.of(context).colorScheme.primary,
+                    child: const Sidebar(),
+                  ),
                 ),
               )
               : null,
@@ -155,7 +155,7 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
               if (!isMobile)
                 Container(
                   width: isTablet ? 80 : 200,
-                  color: Colors.blue,
+                  color: Theme.of(context).colorScheme.primary,
                   child: const Sidebar(),
                 ),
               Expanded(
@@ -179,133 +179,121 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (!isUpdate) ...[
-                            // --- Category selection dropdown ---
-                            DropdownButtonFormField<String>(
-                              value: _selectedCategory,
-                              decoration: const InputDecoration(
-                                labelText: 'Filter by Category',
-                                prefixIcon: Icon(Icons.category),
-                                border: OutlineInputBorder(),
-                              ),
-                              items: [
-                                const DropdownMenuItem<String>(
-                                  value: '',
-                                  child: Text('All Categories'),
-                                ),
-                                ...categories.map(
-                                  (cat) => DropdownMenuItem<String>(
-                                    value: cat,
-                                    child: Text(cat),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedCategory =
-                                      value == '' ? null : value;
-                                });
-                                _filterProducts(productProvider);
-                              },
+                          // --- Category selection dropdown ---
+                          DropdownButtonFormField<String>(
+                            value: _selectedCategory,
+                            decoration: const InputDecoration(
+                              labelText: 'Filter by Category',
+                              prefixIcon: Icon(Icons.category),
+                              border: OutlineInputBorder(),
                             ),
-                            const SizedBox(height: 16),
-                            // --- Search by name or ID ---
-                            TextFormField(
-                              controller: _searchController,
-                              decoration: const InputDecoration(
-                                labelText: 'Search Product by Name or ID',
-                                prefixIcon: Icon(Icons.search),
-                                border: OutlineInputBorder(),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: '',
+                                child: Text('All Categories'),
                               ),
-                              onChanged:
-                                  (value) => _filterProducts(productProvider),
+                              ...categories.map(
+                                (cat) => DropdownMenuItem<String>(
+                                  value: cat,
+                                  child: Text(cat),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedCategory = value == '' ? null : value;
+                              });
+                              _filterProducts(productProvider);
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          // --- Search by name or ID ---
+                          TextFormField(
+                            controller: _searchController,
+                            decoration: const InputDecoration(
+                              labelText: 'Search Product by Name or ID',
+                              prefixIcon: Icon(Icons.search),
+                              border: OutlineInputBorder(),
                             ),
-                            // --- Show search results as a list ---
-                            if (_searchController.text.isNotEmpty &&
-                                _filteredProducts.isNotEmpty)
-                              Container(
-                                constraints: const BoxConstraints(
-                                  maxHeight: 200,
-                                ),
-                                margin: const EdgeInsets.only(
-                                  top: 8,
-                                  bottom: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
+                            onChanged:
+                                (value) => _filterProducts(productProvider),
+                          ),
+                          // --- Show search results as a list ---
+                          if (_searchController.text.isNotEmpty &&
+                              _filteredProducts.isNotEmpty)
+                            Container(
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              margin: const EdgeInsets.only(top: 8, bottom: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.1),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: _filteredProducts.length,
-                                  itemBuilder: (context, index) {
-                                    final product = _filteredProducts[index];
-                                    return ListTile(
-                                      leading:
-                                          product.images.isNotEmpty
-                                              ? ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                                child: Image.network(
-                                                  product.images.first,
-                                                  width: 40,
-                                                  height: 40,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder:
-                                                      (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) => const Icon(
-                                                        Icons.image,
-                                                      ),
-                                                ),
-                                              )
-                                              : const Icon(Icons.image),
-                                      title: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              product.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w500,
+                                ],
+                              ),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: _filteredProducts.length,
+                                itemBuilder: (context, index) {
+                                  final product = _filteredProducts[index];
+                                  return ListTile(
+                                    leading:
+                                        product.images.isNotEmpty
+                                            ? ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              child: Image.network(
+                                                product.images.first,
+                                                width: 40,
+                                                height: 40,
+                                                fit: BoxFit.cover,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) =>
+                                                        const Icon(Icons.image),
                                               ),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
+                                            )
+                                            : const Icon(Icons.image),
+                                    title: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            product.name,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
                                             ),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
                                           ),
-                                        ],
-                                      ),
-                                      subtitle: Text(
-                                        'ID: ${product.productId} | ₦${product.price.toStringAsFixed(2)}',
-                                      ),
-                                      trailing: const Icon(
-                                        Icons.arrow_forward_ios,
-                                        size: 16,
-                                      ),
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedProductId =
-                                              product.productId;
-                                          _searchController.text = product.name;
-                                        });
-                                      },
-                                    );
-                                  },
-                                ),
+                                        ),
+                                      ],
+                                    ),
+                                    subtitle: Text(
+                                      'ID: ${product.productId} | ₦${product.price.toStringAsFixed(2)}',
+                                    ),
+                                    trailing: const Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedProductId = product.productId;
+                                        _searchController.text = product.name;
+                                      });
+                                    },
+                                  );
+                                },
                               ),
-                            const SizedBox(height: 20),
-                          ],
+                            ),
+                          const SizedBox(height: 20),
                           // --- Product selection dropdown ---
                           Builder(
                             builder: (context) {
@@ -323,48 +311,6 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                 _selectedProductId = null;
                               }
 
-                              // For update, show only the selected product in the dropdown
-                              final dropdownItems =
-                                  isUpdate
-                                      ? [
-                                        DropdownMenuItem<int>(
-                                          value: widget.carousel!.productId,
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.shopping_cart,
-                                                color: Colors.blue[300],
-                                                size: 18,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                '${productProvider.products.firstWhere((p) => p.productId == widget.carousel!.productId, orElse: () => Product(id: '', productId: widget.carousel!.productId, name: 'Unknown', description: '', price: 0, category: '', stock: 0, rating: 0, discountRate: 0, images: [], createdAt: '', updatedAt: '')).name} (ID: ${widget.carousel!.productId})',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ]
-                                      : uniqueProducts
-                                          .map(
-                                            (product) => DropdownMenuItem<int>(
-                                              value: product.productId,
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.shopping_cart,
-                                                    color: Colors.blue[300],
-                                                    size: 18,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    '${product.name} (ID: ${product.productId})',
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          )
-                                          .toList();
-
                               return DropdownButtonFormField<int>(
                                 value: _selectedProductId,
                                 decoration: const InputDecoration(
@@ -372,15 +318,35 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                   prefixIcon: Icon(Icons.shopping_bag),
                                   border: OutlineInputBorder(),
                                 ),
-                                items: dropdownItems,
-                                onChanged:
-                                    isUpdate
-                                        ? null // Disable changing product on update
-                                        : (value) {
-                                          setState(() {
-                                            _selectedProductId = value;
-                                          });
-                                        },
+                                items:
+                                    uniqueProducts
+                                        .map(
+                                          (product) => DropdownMenuItem<int>(
+                                            value: product.productId,
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.shopping_cart,
+                                                  color:
+                                                      Theme.of(context)
+                                                          .colorScheme
+                                                          .primary,
+                                                  size: 18,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  '${product.name} (ID: ${product.productId})',
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedProductId = value;
+                                  });
+                                },
                                 validator:
                                     (value) =>
                                         value == null
@@ -430,7 +396,9 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                             backgroundColor:
                                                 provider.isUploading
                                                     ? Colors.grey
-                                                    : Colors.blue,
+                                                    : Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
                                             foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 16,
@@ -472,9 +440,12 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                             ),
                           const SizedBox(height: 20),
                           ElevatedButton.icon(
-                            icon: Icon(isUpdate ? Icons.save : Icons.add),
+                            icon: Icon(
+                              widget.carousel == null ? Icons.add : Icons.save,
+                            ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 32,
@@ -518,7 +489,9 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                               }
                             },
                             label: Text(
-                              isUpdate ? 'Update Carousel' : 'Create Carousel',
+                              widget.carousel == null
+                                  ? 'Create Carousel'
+                                  : 'Update Carousel',
                             ),
                           ),
                         ],

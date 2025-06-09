@@ -108,7 +108,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
       scrollDirection: Axis.horizontal,
       child: DataTable(
         columnSpacing: isMobile ? 12 : 24,
-        headingRowColor: MaterialStateProperty.all(Colors.blue[50]),
+        headingRowColor: MaterialStateProperty.all(
+          Theme.of(context).colorScheme.primary,
+        ),
         columns: const [
           DataColumn(label: Text('Image')),
           DataColumn(label: Text('Name')),
@@ -144,7 +146,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
       scrollDirection: Axis.horizontal,
       child: DataTable(
         columnSpacing: isMobile ? 12 : 24,
-        headingRowColor: MaterialStateProperty.all(Colors.blue[50]),
+        headingRowColor: MaterialStateProperty.all(
+          Theme.of(context).colorScheme.primary,
+        ),
         columns: const [
           DataColumn(label: Text('Image')),
           DataColumn(label: Text('Name')),
@@ -205,7 +209,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isMobile ? 2 : 3,
+        crossAxisCount: isMobile ? 1 : 3,
         childAspectRatio: 0.65,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
@@ -335,7 +339,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
           isMobile
               ? Drawer(
                 child: SafeArea(
-                  child: Container(color: Colors.blue, child: const Sidebar()),
+                  child: Container(
+                    color: Theme.of(context).colorScheme.primary,
+                    child: const Sidebar(),
+                  ),
                 ),
               )
               : null,
@@ -347,7 +354,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               if (!isMobile)
                 Container(
                   width: isTablet ? 80 : 200,
-                  color: Colors.blue,
+                  color: Theme.of(context).colorScheme.primary,
                   child: const Sidebar(),
                 ),
               Expanded(
@@ -391,10 +398,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       const SizedBox(height: 16),
                       provider.isLoading
                           ? Expanded(
-                              child: _viewType == ProductViewType.table
-                                  ? _buildTableSkeleton(isMobile)
-                                  : _buildCardSkeleton(isMobile),
-                            )
+                            child:
+                                _viewType == ProductViewType.table
+                                    ? _buildTableSkeleton(isMobile)
+                                    : _buildCardSkeleton(isMobile),
+                          )
                           : provider.error != null
                           ? Center(child: Text('Error: ${provider.error}'))
                           : provider.products.isEmpty

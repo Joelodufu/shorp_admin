@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/product.dart';
 
@@ -12,12 +13,12 @@ class ProductImagePreview extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child:
           images.isNotEmpty
-              ? Image.network(
-                images[0],
+              ? CachedNetworkImage(
+                imageUrl: images[0],
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
-                errorBuilder:
+                errorWidget:
                     (context, error, stackTrace) =>
                         const Icon(Icons.broken_image, size: 40),
               )
@@ -50,13 +51,18 @@ class ProductInfo extends StatelessWidget {
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
-        Text(category, style: TextStyle(color: Colors.blueGrey[700])),
-        const SizedBox(height: 4),
+        Text(
+          category,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+         SizedBox(height: 4),
         Text(
           '\₦${price.toStringAsFixed(2)}',
-          style: const TextStyle(
+          style:  TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.blue,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ],
@@ -79,7 +85,10 @@ class ProductActions extends StatelessWidget {
     return Row(
       children: [
         IconButton(
-          icon: const Icon(Icons.edit, color: Colors.blue),
+          icon:  Icon(
+            Icons.edit,
+            color: Theme.of(context).colorScheme.primary,
+          ),
           tooltip: 'Edit',
           onPressed: onEdit,
         ),
