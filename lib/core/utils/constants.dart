@@ -7,4 +7,4 @@ class AppRoutes {
 // const String baseUrl = 'http://localhost:3000';
 const String baseUrl = 'https://mystore-mrh0.onrender.com';
 
-const bool isDevelopment = false; // Set to false for production
+const bool isDevelopment = true; // Set to false for production

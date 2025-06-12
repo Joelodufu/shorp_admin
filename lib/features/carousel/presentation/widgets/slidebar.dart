@@ -19,7 +19,7 @@ class Sidebar extends StatelessWidget {
       required bool isSelected,
     }) {
       final listTile = ListTile(
-        selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+        selectedTileColor: Theme.of(context).colorScheme.primary,
         leading: Icon(
           icon,
           color: isSelected

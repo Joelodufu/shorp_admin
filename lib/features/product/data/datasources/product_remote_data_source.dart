@@ -11,8 +11,7 @@ abstract class ProductRemoteDataSource {
   Future<ProductModel> createProduct(ProductModel product);
   Future<ProductModel> updateProduct(int productId, ProductModel product);
   Future<void> deleteProduct(int productId);
-    Future<String> uploadProductImage(File image);
-
+  Future<String> uploadProductImage(File image);
 }
 
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
@@ -20,7 +19,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   ProductRemoteDataSourceImpl({required this.dio});
 
-   Future<String> uploadProductImage(File image) async {
+  Future<String> uploadProductImage(File image) async {
     final dio = Dio();
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(image.path),
@@ -66,9 +65,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<List<String>> getCategories() async {
     try {
       final response = await dio.get('$baseUrl/api/products/categories');
-      print(response);
+      print("The Cartegory Is 🔥🔥🔥 : $response \n");
       return (response.data as List<dynamic>).cast<String>();
     } catch (e) {
+      if (isDevelopment) {
+        print("The Error Extends to Here: ❌❌ $e \n");
+      }
       throw ServerException('Failed to fetch categories: $e');
     }
   }

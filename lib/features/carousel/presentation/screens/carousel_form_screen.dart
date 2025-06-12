@@ -141,7 +141,7 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
               ? Drawer(
                 child: SafeArea(
                   child: Container(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).colorScheme.surface,
                     child: const Sidebar(),
                   ),
                 ),

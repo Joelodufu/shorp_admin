@@ -340,7 +340,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ? Drawer(
                 child: SafeArea(
                   child: Container(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).colorScheme.surface,
                     child: const Sidebar(),
                   ),
                 ),

@@ -47,7 +47,7 @@ class ProductRepositoryImpl implements ProductRepository {
       final categories = await remoteDataSource.getCategories();
       return Success(categories);
     } catch (e) {
-      return const Failure('Failed to fetch categories');
+      return const Failure('Failed to fetch categories ');
     }
   }
 

@@ -352,21 +352,6 @@ class ProductFormScreenState extends State<ProductFormScreen> {
                     updatedAt: widget.product?.updatedAt ?? '',
                   );
 
-                  // final debugModel = ProductModel(
-                  //   id: newProduct.id,
-                  //   productId: newProduct.productId,
-                  //   name: newProduct.name,
-                  //   description: newProduct.description,
-                  //   price: newProduct.price,
-                  //   category: newProduct.category,
-                  //   stock: newProduct.stock,
-                  //   rating: newProduct.rating,
-                  //   discountRate: newProduct.discountRate,
-                  //   images: newProduct.images,
-                  //   createdAt: newProduct.createdAt,
-                  //   updatedAt: newProduct.updatedAt,
-                  // );
-
                   // LOGGING: Print product details before update
                   print('--- Product Update Debug ---');
                   print('productId: $updatingProductId');
@@ -512,7 +497,7 @@ class ProductFormScreenState extends State<ProductFormScreen> {
               ? Drawer(
                 child: SafeArea(
                   child: Container(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).colorScheme.surface,
                     child: const Sidebar(),
                   ),
                 ),
