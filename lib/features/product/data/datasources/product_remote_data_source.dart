@@ -66,6 +66,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<List<String>> getCategories() async {
     try {
       final response = await dio.get('$baseUrl/api/products/categories');
+      print(response);
       return (response.data as List<dynamic>).cast<String>();
     } catch (e) {
       throw ServerException('Failed to fetch categories: $e');
