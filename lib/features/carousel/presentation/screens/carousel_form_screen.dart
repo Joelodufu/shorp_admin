@@ -125,12 +125,9 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                       ),
                 )
                 : null,
-        backgroundColor: Colors.white,
         elevation: 1,
-        iconTheme:  IconThemeData(
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        titleTextStyle:  TextStyle(
+        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.primary),
+        titleTextStyle: TextStyle(
           color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
           fontSize: 20,
@@ -164,7 +161,6 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                     constraints: const BoxConstraints(maxWidth: 600),
                     padding: EdgeInsets.all(padding),
                     decoration: BoxDecoration(
-                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -225,7 +221,6 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                               constraints: const BoxConstraints(maxHeight: 200),
                               margin: const EdgeInsets.only(top: 8, bottom: 8),
                               decoration: BoxDecoration(
-                                color: Colors.white,
                                 border: Border.all(color: Colors.grey.shade300),
                                 borderRadius: BorderRadius.circular(8),
                                 boxShadow: [
@@ -328,9 +323,9 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                                 Icon(
                                                   Icons.shopping_cart,
                                                   color:
-                                                      Theme.of(context)
-                                                          .colorScheme
-                                                          .primary,
+                                                      Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary,
                                                   size: 18,
                                                 ),
                                                 const SizedBox(width: 8),
@@ -399,7 +394,6 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                                                     : Theme.of(
                                                       context,
                                                     ).colorScheme.primary,
-                                            foregroundColor: Colors.white,
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 16,
                                               vertical: 14,
@@ -446,7 +440,6 @@ class CarouselFormScreenState extends State<CarouselFormScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Theme.of(context).colorScheme.primary,
-                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 32,
                                 vertical: 16,

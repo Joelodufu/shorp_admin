@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 // Brand colors
-const Color kBrandGold = Color(0xFFFFD700); // Gold
-const Color kBrandBlack = Colors.black;
+const Color kBrandGold = Color.fromARGB(255, 217, 152, 0); // Gold
+const Color kBrandBlack = Colors.grey;
 
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
@@ -10,9 +10,6 @@ final ThemeData darkTheme = ThemeData(
   colorScheme: ColorScheme.dark(
     primary: kBrandGold,
     secondary: kBrandBlack,
-    background: kBrandBlack,
-    surface: Color(0xFF1A1A1A),
-    onPrimary: kBrandBlack,
     onSecondary: kBrandGold,
     onBackground: Colors.white,
     onSurface: Colors.white,

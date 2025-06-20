@@ -4,7 +4,7 @@ class AppRoutes {
   static const carousel = '/carousel';
 }
 
-// const String baseUrl = 'http://localhost:3000';
-const String baseUrl = 'https://mystore-mrh0.onrender.com';
+const String baseUrl = 'http://localhost:3000';
+// const String baseUrl = 'https://mystore-mrh0.onrender.com';
 
 const bool isDevelopment = true; // Set to false for production
